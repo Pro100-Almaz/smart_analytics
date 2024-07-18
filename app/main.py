@@ -1,10 +1,10 @@
 from fastapi import FastAPI
-from app.database import database
+# from app.database import database
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.webhook import router as webhook_router
 from app.router.user import router as user_router
-
+from app.router.main import router as funding_data_router
 app = FastAPI()
 
 
@@ -18,13 +18,13 @@ app.add_middleware(
 
 app.include_router(webhook_router, prefix="/webhook")
 app.include_router(user_router, prefix="/user")
+app.include_router(funding_data_router, prefix="/tickers")
 
-
-@app.on_event("startup")
-async def startup():
-    await database.connect()
-
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
-
+# @app.on_event("startup")
+# async def startup():
+#     await database.connect()
+#
+# @app.on_event("shutdown")
+# async def shutdown():
+#     await database.disconnect()
+#
