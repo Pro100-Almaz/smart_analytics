@@ -25,25 +25,27 @@ class Update(BaseModel):
 @router.post(f"")
 async def webhook(update: Update):
     logging.info(update)
+    print(update)
 
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
     reply_markup = {
         "inline_keyboard": [[{
             "text": "go to game",
-            "web_app": {"url": ""}
+            "web_app": {"url": "https://756e-89-107-97-177.ngrok-free.app"}
         }]]
     }
 
     payload = {
         "chat_id": update.message.get('from').get('id'),
-        "text": """
+        "text": """Hello My friend
             """,
         "reply_markup": reply_markup,
     }
 
     response = requests.post(url, json=payload)
     logging.info(response)
+    print(response)
     return {"Status": "ok"}
 
 
@@ -56,8 +58,8 @@ async def webhook(update: Update):
 #         raise HTTPException(status_code=response.status_code, detail="Failed to set webhook")
 #     logging.info(f"Webhook set: {WEBHOOK_URL}")
 #     print(f"Webhook set: {WEBHOOK_URL}")
-
-
+#
+#
 # @router.on_event("shutdown")
 # async def on_shutdown():
 #     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteWebhook"
