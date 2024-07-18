@@ -37,7 +37,7 @@ async def webhook(update: Update):
 
     payload = {
         "chat_id": update.message.get('from').get('id'),
-        "text": """
+        "text": """ывапывапывап
             """,
         "reply_markup": reply_markup,
     }
