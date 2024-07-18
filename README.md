@@ -77,8 +77,5 @@ This is a FastAPI project that serves as a template for building a high-performa
 
 ## Testing
 
-To run tests, use the following command:
+To run tests, use the following command... <em>Coming soon!</em>
 
-    ```bash
-    pytest
-    ```    
