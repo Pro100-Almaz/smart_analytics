@@ -15,7 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(webhook_router, prefix="/webhook")
+# app.include_router(webhook_router, prefix="/webhook")
 
 
 @app.on_event("startup")
@@ -26,6 +26,3 @@ async def startup():
 async def shutdown():
     await database.disconnect()
 
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
