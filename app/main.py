@@ -1,4 +1,3 @@
-import uvicorn
 from fastapi import FastAPI
 from app.database import database
 from fastapi.middleware.cors import CORSMiddleware

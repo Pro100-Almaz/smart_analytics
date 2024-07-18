@@ -1,3 +1,8 @@
 .idea
 venv
 .env
+app/__pycache__
+app/router/main/__pycache__
+
+services/__pycache__
+tests/__pycache__
