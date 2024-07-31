@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 
 import os
-import logging
 import requests
 
 load_dotenv()
@@ -24,9 +23,6 @@ class Update(BaseModel):
 
 @router.post(f"")
 async def webhook(update: Update):
-    logging.info(update)
-    print(update)
-
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
     reply_markup = {
@@ -53,8 +49,6 @@ Smart Analytics — это ваш персональный помощник в �
     }
 
     response = requests.post(url, json=payload)
-    logging.info(response)
-    print(response)
     return {"Status": "ok"}
 
 
