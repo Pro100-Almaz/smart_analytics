@@ -12,26 +12,20 @@ load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM')
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', 30))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', 5))
 
 
 def verify_jwt(jw_token: str) -> bool:
-    is_token_valid: bool = False
-
     try:
         payload = jwt.decode(jw_token, SECRET_KEY, algorithms=[ALGORITHM])
         expire = datetime.utcfromtimestamp(payload.get("exp"))
 
         if expire < datetime.utcnow():
-            return is_token_valid
+            return False
         return payload
 
     except:
-        payload = None
-    if payload:
-        is_token_valid = True
-
-    return is_token_valid
+        return False
 
 
 class JWTBearer(HTTPBearer):

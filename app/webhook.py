@@ -7,6 +7,10 @@ from dotenv import load_dotenv
 import os
 import requests
 
+from app.database import database
+from i18n import i18n
+
+
 load_dotenv()
 
 # Define your Telegram bot token
@@ -23,32 +27,170 @@ class Update(BaseModel):
 
 @router.post(f"")
 async def webhook(update: Update):
+    if not update.message.get("text", None):
+        return {"Status": "ok"}
+
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
-    reply_markup = {
-        "inline_keyboard": [[{
-            "text": "go to game",
-            "web_app": {"url": "https://smart-trade-kappa.vercel.app/"}
-        }]]
-    }
+    telegram_id = update.message.get("from").get("id")
+    username = update.message.get("from").get("username", None)
+    language_code = update.message.get("from").get("language_code", "en")
+    first_name = update.message.get("from").get("first_name", None)
+    last_name = update.message.get("from").get("last_name", None)
+    is_tg_premium = update.message.get("from").get("is_premium", False)
+    new_referral_link = "https://t.me/practically_bot?start=refId" + str(telegram_id)
+
+    bot_return_text = i18n.get_string('bot.default_text', 'en')
+    process_status = "success"
+
+    if update.message.get("text").startswith("/start refId"):
+
+        user_id = await database.fetchrow(
+            """
+            SELECT user_id
+            FROM public."user"
+            WHERE telegram_id = $1
+            """, telegram_id
+        )
+
+        if user_id is None:
+            ref_id = update.message.get("text").split(" ")[1][5:]
+
+            referring_id = await database.fetchrow(
+                """
+                SELECT user_id
+                FROM public."user"
+                WHERE telegram_id = $1
+                """, int(ref_id)
+            )
+
+            referring_id = int(referring_id.get("user_id"))
+
+            try:
+                result = await database.fetch(
+                    """
+                    INSERT INTO public.user (telegram_id, user_name, last_login, sign_up_date, first_name, last_name, 
+                    language_code, referral_link, bonus_id)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    RETURNING user_id
+                    """, telegram_id, username, None, None, first_name, last_name, language_code, new_referral_link, 1
+                )
+
+                user_id = int(result[0].get('user_id'))
+
+                await database.execute(
+                    """
+                    INSERT INTO public.points (user_id, points_total, points_per_minute) VALUES ($1, 2000, 0);
+                    """, user_id
+                )
+
+                await database.execute(
+                    """
+                    INSERT INTO public.stamina (user_id) VALUES ($1);
+                    """, user_id
+                )
+
+                await database.execute(
+                    """
+                    INSERT INTO public.level (user_id) VALUES ($1);
+                    """, user_id
+                )
+
+                referral_points = 20000 if is_tg_premium else 5000
+
+                await database.execute(
+                    """
+                    INSERT INTO public.user_friends_history (user_id, referred_id, points, total_points, tg_premium) 
+                    VALUES ($1, $2, $3, $4, $5);
+                    """, referring_id, user_id, referral_points, referral_points, is_tg_premium
+                )
+
+                return_text = i18n.get_string('bot.success_message', language_code).format(referred_id=telegram_id)
+                bot_return_text = (i18n.get_string('bot.invited_client_welcome_text', language_code).
+                                   format(user_nickname=username))
+
+                payload = {
+                    "chat_id": ref_id,
+                    "text": return_text
+                }
+
+                response = requests.post(url, json=payload)
+                print(response)
+
+            except Exception as e:
+                logging.error(f"Error occured while creating user {update.message}: {e}")
+                bot_return_text = i18n.get_string('bot.error_message', language_code)
+                process_status = "error"
+
+    elif update.message.get("text").startswith("/help"):
+        bot_return_text = i18n.get_string('bot.help_message', 'en')
+        process_status = "help"
+
+    elif update.message.get("text").startswith("/start"):
+        user_id = await database.fetchrow(
+            """
+            SELECT user_id
+            FROM public."user"
+            WHERE telegram_id = $1
+            """, telegram_id
+        )
+
+        if user_id is None:
+            try:
+                result = await database.fetch(
+                    """
+                    INSERT INTO public.user (telegram_id, user_name, last_login, sign_up_date, first_name, last_name, 
+                    language_code, referral_link, bonus_id)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    RETURNING user_id
+                    """, telegram_id, username, None, None, first_name, last_name, language_code, new_referral_link, 1
+                )
+
+                user_id = int(result[0].get('user_id'))
+
+                await database.execute(
+                    """
+                    INSERT INTO public.points (user_id, points_total, points_per_minute) VALUES ($1, 0, 0);
+                    """, user_id
+                )
+
+                await database.execute(
+                    """
+                    INSERT INTO public.stamina (user_id) VALUES ($1);
+                    """, user_id
+                )
+
+                await database.execute(
+                    """
+                    INSERT INTO public.level (user_id) VALUES ($1);
+                    """, user_id
+                )
+
+                bot_return_text = (i18n.get_string('bot.client_welcome_text', language_code).
+                                   format(user_nickname=username))
+
+            except Exception as e:
+                logging.error(f"Error occured while creating user {update.message}: {e}")
+                bot_return_text = i18n.get_string('bot.error_message', language_code)
+                process_status = "error"
 
     payload = {
         "chat_id": update.message.get('from').get('id'),
-        "text": """🎉 Добро пожаловать в Smart Analytics!
-
-Smart Analytics — это ваш персональный помощник в мире криптовалют и фондового рынка. Получайте актуальные данные, анализируйте рынок и принимайте взвешенные решения.
-
-🔍 Исследуйте рынок: Отслеживайте изменения цен, активность торгов и рост активов в реальном времени.
-
-📈 Анализируйте данные: Используйте эксклюзивные аналитические инструменты для глубокого понимания рыночных тенденций.
-
-💼 Подписка: Откройте доступ к расширенным функциям и получайте максимум полезной информации.
-
-Удачи в ваших инвестициях и успешных сделок! 🚀""",
-        "reply_markup": reply_markup,
+        "text": bot_return_text
     }
 
+    if process_status == "success":
+        reply_markup = {
+            "inline_keyboard": [[{
+                "text": "Lets trade!",
+                "web_app": {"url": "https://smart-trade-kappa.vercel.app/"}
+            }]]
+        }
+
+        payload["reply_markup"] = reply_markup
+
     response = requests.post(url, json=payload)
+
     return {"Status": "ok"}
 
 
