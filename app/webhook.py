@@ -114,6 +114,7 @@ async def webhook(update: Update):
             WHERE telegram_id = $1
             """, telegram_id
         )
+        print(user_id)
 
         if user_id is None:
             try:
@@ -130,6 +131,7 @@ async def webhook(update: Update):
                                    format(user_nickname=username))
 
             except Exception as e:
+                print(e)
                 bot_return_text = i18n.get_string('bot.error_message', language_code)
                 process_status = "error"
 
