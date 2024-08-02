@@ -48,7 +48,7 @@ async def webhook(update: Update):
         user_id = await database.fetchrow(
             """
             SELECT user_id
-            FROM public."user"
+            FROM users."user"
             WHERE telegram_id = $1
             """, telegram_id
         )
@@ -59,7 +59,7 @@ async def webhook(update: Update):
             referring_id = await database.fetchrow(
                 """
                 SELECT user_id
-                FROM public."user"
+                FROM users."user"
                 WHERE telegram_id = $1
                 """, int(ref_id)
             )
@@ -69,40 +69,21 @@ async def webhook(update: Update):
             try:
                 result = await database.fetch(
                     """
-                    INSERT INTO public.user (telegram_id, user_name, last_login, sign_up_date, first_name, last_name, 
-                    language_code, referral_link, bonus_id)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    INSERT INTO users.user (telegram_id, username, profile_photo, first_name, last_name, 
+                    language_code, referral_link)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
                     RETURNING user_id
-                    """, telegram_id, username, None, None, first_name, last_name, language_code, new_referral_link, 1
+                    """, telegram_id, username, None, first_name, last_name, language_code, new_referral_link
                 )
 
                 user_id = int(result[0].get('user_id'))
 
                 await database.execute(
                     """
-                    INSERT INTO public.points (user_id, points_total, points_per_minute) VALUES ($1, 2000, 0);
-                    """, user_id
-                )
-
-                await database.execute(
-                    """
-                    INSERT INTO public.stamina (user_id) VALUES ($1);
-                    """, user_id
-                )
-
-                await database.execute(
-                    """
-                    INSERT INTO public.level (user_id) VALUES ($1);
-                    """, user_id
-                )
-
-                referral_points = 20000 if is_tg_premium else 5000
-
-                await database.execute(
-                    """
-                    INSERT INTO public.user_friends_history (user_id, referred_id, points, total_points, tg_premium) 
-                    VALUES ($1, $2, $3, $4, $5);
-                    """, referring_id, user_id, referral_points, referral_points, is_tg_premium
+                    INSERT INTO users.referral_list (user_id, referred_id, requested, cash)
+                    VALUES ($1, $2, $3, $4)
+                    RETURNING user_id
+                    """, user_id, referring_id, False, 0
                 )
 
                 return_text = i18n.get_string('bot.success_message', language_code).format(referred_id=telegram_id)
@@ -118,7 +99,6 @@ async def webhook(update: Update):
                 print(response)
 
             except Exception as e:
-                logging.error(f"Error occured while creating user {update.message}: {e}")
                 bot_return_text = i18n.get_string('bot.error_message', language_code)
                 process_status = "error"
 
@@ -130,49 +110,29 @@ async def webhook(update: Update):
         user_id = await database.fetchrow(
             """
             SELECT user_id
-            FROM public."user"
+            FROM users."user"
             WHERE telegram_id = $1
             """, telegram_id
         )
 
         if user_id is None:
             try:
-                result = await database.fetch(
+                await database.execute(
                     """
-                    INSERT INTO public.user (telegram_id, user_name, last_login, sign_up_date, first_name, last_name, 
-                    language_code, referral_link, bonus_id)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    INSERT INTO users.user (telegram_id, username, profile_photo, first_name, last_name, 
+                    language_code, referral_link)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
                     RETURNING user_id
-                    """, telegram_id, username, None, None, first_name, last_name, language_code, new_referral_link, 1
-                )
-
-                user_id = int(result[0].get('user_id'))
-
-                await database.execute(
-                    """
-                    INSERT INTO public.points (user_id, points_total, points_per_minute) VALUES ($1, 0, 0);
-                    """, user_id
-                )
-
-                await database.execute(
-                    """
-                    INSERT INTO public.stamina (user_id) VALUES ($1);
-                    """, user_id
-                )
-
-                await database.execute(
-                    """
-                    INSERT INTO public.level (user_id) VALUES ($1);
-                    """, user_id
+                    """, telegram_id, username, None, first_name, last_name, language_code, new_referral_link
                 )
 
                 bot_return_text = (i18n.get_string('bot.client_welcome_text', language_code).
                                    format(user_nickname=username))
 
             except Exception as e:
-                logging.error(f"Error occured while creating user {update.message}: {e}")
                 bot_return_text = i18n.get_string('bot.error_message', language_code)
                 process_status = "error"
+
 
     payload = {
         "chat_id": update.message.get('from').get('id'),
