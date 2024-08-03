@@ -1,0 +1,54 @@
+CREATE SCHEMA users;
+
+CREATE TABLE users.user (
+    user_id SERIAL PRIMARY KEY,
+    telegram_id BIGINT NOT NULL UNIQUE,
+    phone_number VARCHAR(20),
+    username VARCHAR(30),
+    profile_photo VARCHAR(50),
+    last_login TIMESTAMP DEFAULT current_timestamp,
+    sign_up DATE DEFAULT current_date,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    language_code VARCHAR(2),
+    referral_link VARCHAR(150),
+    active BOOLEAN DEFAULT false
+);
+
+CREATE TABLE users.premium (
+    user_id INTEGER,
+    FOREIGN KEY (user_id) REFERENCES users.user(user_id),
+    status BOOLEAN DEFAULT false,
+    last_payment timestamp,
+    discout varchar(50) DEFAULT NULL
+);
+
+CREATE TABLE users.user_notification (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    FOREIGN KEY (user_id) REFERENCES users.user(user_id),
+    notification_type VARCHAR(50),
+    notify_time VARCHAR(50),
+    created TIMESTAMP DEFAULT current_timestamp,
+    active BOOLEAN DEFAULT true,
+    condition VARCHAR(50)
+);
+
+CREATE TABLE users.notification (
+    type INTEGER,
+    FOREIGN KEY (type) REFERENCES users.user_notification(id),
+    date TIMESTAMP DEFAULT current_timestamp,
+    text TEXT,
+    status BOOLEAN
+);
+
+CREATE TABLE users.referral_list (
+    user_id INTEGER,
+    FOREIGN KEY (user_id) REFERENCES users.user(user_id),
+    referred_id INTEGER UNIQUE,
+    FOREIGN KEY (referred_id) REFERENCES users.user(user_id),
+    requested BOOLEAN DEFAULT false,
+    cash INTEGER
+);
+
+
