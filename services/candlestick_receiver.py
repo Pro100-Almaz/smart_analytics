@@ -156,5 +156,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        # send_message('Script: get_asset_data\n Text: Script has been stopped manually.')
         pass

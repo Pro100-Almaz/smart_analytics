@@ -9,7 +9,7 @@ from app.webhook import router as webhook_router
 from app.router.user import router as user_router
 from .logger import logger
 
-app = FastAPI()
+app = FastAPI(openapi_prefix="/documentation", title="My API", version="3.1.0")
 
 
 app.add_middleware(

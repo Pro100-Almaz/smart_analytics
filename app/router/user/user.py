@@ -37,7 +37,7 @@ async def login_user(user: User):
         """
         UPDATE users.user
         SET last_login = $3
-        WHERE telegram_id = $1 AND user_name = $2
+        WHERE telegram_id = $1 AND username = $2
         RETURNING user_id
         """, telegram_id, username, datetime.now()
     )

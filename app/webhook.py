@@ -9,6 +9,7 @@ import requests
 
 from app.database import database
 from i18n import i18n
+from .logger import logger
 
 
 load_dotenv()
@@ -163,8 +164,8 @@ async def webhook(update: Update):
 #     response = requests.post(url, json=payload)
 #     if response.status_code != 200:
 #         raise HTTPException(status_code=response.status_code, detail="Failed to set webhook")
-#     logging.info(f"Webhook set: {WEBHOOK_URL}")
 #     print(f"Webhook set: {WEBHOOK_URL}")
+#     logger.info("Webhook set!")
 #
 #
 # @router.on_event("shutdown")
@@ -173,4 +174,4 @@ async def webhook(update: Update):
 #     response = requests.post(url)
 #     if response.status_code != 200:
 #         raise HTTPException(status_code=response.status_code, detail="Failed to delete webhook")
-#     logging.info("Webhook deleted")
+#     logger.info("Webhook dropped!")
