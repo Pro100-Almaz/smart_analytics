@@ -1,13 +1,33 @@
 import json
+from decimal import Decimal, ROUND_DOWN
+
 import requests
 import datetime
+import os
+import time
+
+import schedule
 import logging
+from logging.handlers import RotatingFileHandler
 
 from database import database, redis_database
 
-logging.basicConfig(filename='logs\\funding_rate.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-print("Hello")
+log_directory = "logs"
+log_filename = "funding_rate.log"
+log_file_path = os.path.join(log_directory, log_filename)
+
+if not os.path.exists(log_directory):
+    os.makedirs(log_directory)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
+
+handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 
 def get_funding_data():
     url = "https://fapi.binance.com/fapi/v1/fundingRate"
@@ -20,19 +40,22 @@ def get_funding_data():
         sorted_data = sorted(funding_data, key=lambda x: float(x['fundingRate']))
         now = datetime.datetime.now()
 
-        rounded_time = now.replace(second=0, microsecond=0)
+        try:
+            rounded_time = now.replace(second=0, microsecond=0)
 
-        first_5 = sorted_data[0:5]
-        last_5 = sorted_data[-5:]
+            first_5 = sorted_data[0:5]
+            last_5 = sorted_data[-5:]
 
-        redis_data = {
-            'last_update_time': rounded_time,
-            'first_5': first_5,
-            'last_5': last_5,
-        }
+            redis_data = {
+                'last_update_time': rounded_time.isoformat(),
+                'first_5': first_5,
+                'last_5': last_5,
+            }
 
-        json_data = json.dumps(redis_data)
-        redis_database.set('funding:top:5:tickets', json_data)
+            json_data = json.dumps(redis_data)
+            redis_database.set('funding:top:5:tickets', json_data)
+        except Exception as e:
+            logging.error(f"Error arose while trying to insert top tickets into Reddis, error message:{e}")
 
         for record in funding_data:
             try:
@@ -51,26 +74,35 @@ def get_funding_data():
                     """, (record["symbol"], "crypto", record["symbol"])
                 )
             except Exception as e:
-                logging.error(f"This is an error message {e}")
+                logging.error(f"Error arose while trying to insert funding names into DB, error message:{e}")
+                return "Error with DB"
 
             stock_id = stock_id[0][0]
-            funding_rate = record["fundingRate"]
-            market_price = record["markPrice"]
+            funding_rate = Decimal(record["fundingRate"]).quantize(Decimal('.00000000001'), rounding=ROUND_DOWN)
+            market_price = Decimal(record["markPrice"]).quantize(Decimal('.00000001'), rounding=ROUND_DOWN)
 
             seconds = record["fundingTime"] / 1000.0
             timestamp = datetime.datetime.fromtimestamp(seconds)
 
-            database.execute(
-                """
-                    INSERT INTO data_history.funding_data (stock_id, funding_rate, mark_price, funding_time)
-                    VALUES (%s, %s, %s, %s);
-                """, (stock_id, funding_rate, market_price, timestamp)
-            )
+            try:
+                database.execute(
+                    """
+                        INSERT INTO data_history.funding_data (stock_id, funding_rate, mark_price, funding_time)
+                        VALUES (%s, %s, %s, %s)
+                    """, (stock_id, funding_rate, market_price, timestamp)
+                )
+            except Exception as e:
+                logging.error(f"Error arose while trying to insert funding data into DB, error message:{e}")
+                return "Error with DB"
 
-        return funding_data
+        database.disconnect()
+        return True
 
     return False
 
-data = get_funding_data()
-# top_5_negative_funding = data.head(5)['symbol'].tolist()
-# top_5_positive_funding = data.tail(5)['symbol'].tolist()
+schedule.every(60).seconds.do(get_funding_data)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
+

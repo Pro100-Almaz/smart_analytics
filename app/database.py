@@ -1,3 +1,5 @@
+import json
+
 import redis
 from dotenv import load_dotenv
 
@@ -44,6 +46,15 @@ class RedisDatabase:
 
     def set_user_token(self, user_id, token):
         return self.r.set(f"{user_id}:session", token)
+
+    def get_top_5_tickers(self):
+        stored_data = self.r.get('funding:top:5:tickets')
+
+        if stored_data:
+            data = json.loads(stored_data.decode('utf-8'))
+            return data
+        else:
+            return None
 
 
 database = Database()
