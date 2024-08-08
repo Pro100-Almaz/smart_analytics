@@ -9,7 +9,7 @@ load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://user:password@localhost/dbname')
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = os.getenv('REDIS_PORT', 6379)
-REDIS_DB = os.getenv('REDIS_DB', 1)
+REDIS_DB = os.getenv('REDIS_DB', 0)
 
 
 class Database:
