@@ -51,7 +51,7 @@ class RedisDatabase:
         stored_data = self.r.get('funding:top:5:tickets')
 
         if stored_data:
-            data = json.loads(stored_data.decode('utf-8'))
+            data = stored_data.decode('utf-8')
             return data
         else:
             return None
