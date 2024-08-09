@@ -86,7 +86,7 @@ def get_volume_data():
             try:
                 database.execute(
                     """
-                        INSERT INTO data_history.funding_data (stock_id, funding_rate, mark_price, funding_time)
+                        INSERT INTO data_history.volume_data (stock_id, funding_rate, mark_price, funding_time)
                         VALUES (%s, %s, %s, %s)
                     """, (stock_id, funding_rate, market_price, timestamp)
                 )

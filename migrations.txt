@@ -51,4 +51,39 @@ CREATE TABLE users.referral_list (
     cash INTEGER
 );
 
+CREATE SCHEMA data_history;
+
+CREATE TABLE data_history.funding (
+    stock_id SERIAL PRIMARY KEY,
+    symbol VARCHAR(20) UNIQUE NOT NULL,
+    company_name VARCHAR(100)
+);
+
+CREATE TABLE data_history.funding_data (
+    stock_id INTEGER REFERENCES data_history.funding(stock_id),
+    funding_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    funding_rate NUMERIC(12, 11),
+    mark_price NUMERIC(20, 8)
+);
+
+CREATE INDEX idx_stock_time ON data_history.funding_data(stock_id, funding_time);
+
+CREATE TABLE data_history.funding_data (
+    stock_id INTEGER REFERENCES data_history.funding(stock_id),
+    price_change NUMERIC(12, 11),
+    price_change_percent NUMERIC(7, 3),
+    weighted_avg_price NUMERIC(12, 11),
+    last_price NUMERIC(12, 11),
+    last_qty NUMERIC(12, 11),
+    open_price NUMERIC(12, 11),
+    high_price NUMERIC(12, 11),
+    volume NUMERIC(12, 11),
+    quote_volume NUMERIC(12, 11),
+    open_time NUMERIC(12, 11),
+    close_time NUMERIC(12, 11),
+    first_id INTEGER,
+    last_id INTEGER,
+    count INTEGER
+);
+
 
