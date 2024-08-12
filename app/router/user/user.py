@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from .schemas import User
 
 from app.utils import create_access_token
-from app.database import database, redis_database
+from app.database import database
 
 
 load_dotenv()
@@ -36,7 +36,7 @@ async def login_user(user: User):
     user_data = await database.fetchrow(
         """
         UPDATE users.user
-        SET last_login = $3
+        SET last_login = $3 and active = true
         WHERE telegram_id = $1 AND username = $2
         RETURNING user_id
         """, telegram_id, username, datetime.now()
@@ -53,6 +53,5 @@ async def login_user(user: User):
 
     token = create_access_token({"telegram_id": telegram_id, "username": username,
                                  "user_id": user_id})
-    redis_database.set_user_token(user_id, token)
 
     return {"token": token, "user_id": user_id, "Status": "200", "username": username}
