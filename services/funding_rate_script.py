@@ -77,21 +77,25 @@ def get_volume_data():
                 return "Error with DB"
 
             stock_id = stock_id[0][0]
-            funding_rate = Decimal(record["fundingRate"]).quantize(Decimal('.00000000001'), rounding=ROUND_DOWN)
-            market_price = Decimal(record["markPrice"]).quantize(Decimal('.00000001'), rounding=ROUND_DOWN)
 
-            seconds = record["fundingTime"] / 1000.0
-            timestamp = datetime.datetime.fromtimestamp(seconds)
+            open_time = datetime.datetime.fromtimestamp(record["openTime"] / 1000.0)
+            close_time = datetime.datetime.fromtimestamp(record["closeTime"] / 1000.0)
 
             try:
                 database.execute(
                     """
-                        INSERT INTO data_history.volume_data (stock_id, funding_rate, mark_price, funding_time)
-                        VALUES (%s, %s, %s, %s)
-                    """, (stock_id, funding_rate, market_price, timestamp)
+                        INSERT INTO data_history.volume_data (stock_id, price_change, price_change_percent, 
+                        weighted_avg_price, last_price, last_qty, open_price, high_price, volume, quote_volume, 
+                        open_time, close_time, first_id, last_id, count)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (stock_id, Decimal(record["priceChange"]), Decimal(record["priceChangePercent"]),
+                          Decimal(record["weightedAvgPrice"]), Decimal(record["lastPrice"]), Decimal(record["lastQty"]),
+                          Decimal(record["openPrice"]), Decimal(record["highPrice"]), Decimal(record["volume"]),
+                          Decimal(record["quoteVolume"]), open_time, close_time, record["firstId"], record["lastId"],
+                          record["count"])
                 )
             except Exception as e:
-                logging.error(f"Error arose while trying to insert funding data into DB, error message:{e}")
+                logging.error(f"Error arose while trying to insert volume data into DB, error message:{e}")
                 return "Error with DB"
 
         database.disconnect()
@@ -171,6 +175,7 @@ def get_funding_data():
     return False
 
 schedule.every(60).seconds.do(get_funding_data)
+schedule.every(30).seconds.do(get_volume_data)
 
 while True:
     schedule.run_pending()

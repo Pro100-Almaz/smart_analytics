@@ -68,19 +68,19 @@ CREATE TABLE data_history.funding_data (
 
 CREATE INDEX idx_stock_time ON data_history.funding_data(stock_id, funding_time);
 
-CREATE TABLE data_history.funding_data (
+CREATE TABLE data_history.volume_data (
     stock_id INTEGER REFERENCES data_history.funding(stock_id),
-    price_change NUMERIC(12, 11),
-    price_change_percent NUMERIC(7, 3),
-    weighted_avg_price NUMERIC(12, 11),
-    last_price NUMERIC(12, 11),
-    last_qty NUMERIC(12, 11),
-    open_price NUMERIC(12, 11),
-    high_price NUMERIC(12, 11),
-    volume NUMERIC(12, 11),
-    quote_volume NUMERIC(12, 11),
-    open_time NUMERIC(12, 11),
-    close_time NUMERIC(12, 11),
+    price_change NUMERIC,
+    price_change_percent NUMERIC,
+    weighted_avg_price NUMERIC,
+    last_price NUMERIC,
+    last_qty NUMERIC,
+    open_price NUMERIC,
+    high_price NUMERIC,
+    volume NUMERIC,
+    quote_volume NUMERIC,
+    open_time NUMERIC,
+    close_time NUMERIC,
     first_id INTEGER,
     last_id INTEGER,
     count INTEGER

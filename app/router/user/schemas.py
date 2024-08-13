@@ -1,5 +1,5 @@
 from pydantic import BaseModel
 
 
-class User(BaseModel):
-    data: dict
+class Authorization(BaseModel):
+    data_check_string: str

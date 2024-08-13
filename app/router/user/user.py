@@ -1,14 +1,14 @@
 import hashlib
 import os
-import urllib.parse
+import hmac
+import urllib.parse as urlparse
 from datetime import datetime
 
 from dotenv import load_dotenv
 
 from fastapi import APIRouter, HTTPException, status, Depends
 
-from .schemas import User
-
+from .schemas import Authorization
 from app.utils import create_access_token
 from app.database import database
 
@@ -24,14 +24,32 @@ def create_hashed_link(user_id, username, telegram_id, hash_length=30):
     truncated_hash = hashed_value[:hash_length]
 
     base_link = str(os.getenv('BASE_URL')) + "/referral_link/"
-    hashed_link = f"{base_link}{urllib.parse.quote(truncated_hash)}"
+    hashed_link = f"{base_link}{urlparse.quote(truncated_hash)}"
 
     return hashed_link
 
+def verify_telegram_web_app_data(telegram_init_data):
+    init_data = urlparse.parse_qs(telegram_init_data)
+    hash_value = init_data.get('hash', [None])[0]
+
+    sorted_items = sorted((key, val[0]) for key, val in init_data.items() if key != 'hash')
+    data_to_check = [f"{key}={value}" for key, value in sorted_items]
+
+    secret = hmac.new(b"WebAppData", os.getenv('TELEGRAM_BOT_TOKEN').encode(), hashlib.sha256).digest()
+    _hash = hmac.new(secret, "\n".join(data_to_check).encode(), hashlib.sha256).hexdigest()
+
+    return _hash == hash_value, init_data.get("user_data", [None])[0]
+
+
 @router.post("/login_user")
-async def login_user(user: User):
-    telegram_id = user.data.get("id")
-    username = user.data.get("username")
+async def login_user(telegram_data: Authorization):
+    data_from_telegram, user_tg_data = verify_telegram_web_app_data(telegram_data.data_check_string)
+
+    if not data_from_telegram:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Not valid telegram data",
+        )
 
     user_data = await database.fetchrow(
         """
@@ -39,7 +57,7 @@ async def login_user(user: User):
         SET last_login = $3 and active = true
         WHERE telegram_id = $1 AND username = $2
         RETURNING user_id
-        """, telegram_id, username, datetime.now()
+        """, user_tg_data.get("id"), user_tg_data.get("username"), datetime.now()
     )
 
     user_id = int(user_data.get('user_id'))
@@ -51,7 +69,7 @@ async def login_user(user: User):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    token = create_access_token({"telegram_id": telegram_id, "username": username,
+    token = create_access_token({"telegram_id": user_tg_data.get("id"), "username": user_tg_data.get("username"),
                                  "user_id": user_id})
 
-    return {"token": token, "user_id": user_id, "Status": "200", "username": username}
+    return {"token": token, "user_id": user_id, "Status": "200", "username": user_tg_data.get("username")}
