@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import hmac
 import urllib.parse as urlparse
@@ -38,7 +39,7 @@ def verify_telegram_web_app_data(telegram_init_data):
     secret = hmac.new(b"WebAppData", os.getenv('TELEGRAM_BOT_TOKEN').encode(), hashlib.sha256).digest()
     _hash = hmac.new(secret, "\n".join(data_to_check).encode(), hashlib.sha256).hexdigest()
 
-    return _hash == hash_value, init_data.get("user_data", [None])[0]
+    return _hash == hash_value, init_data.get("user", [None])[0]
 
 
 @router.post("/login_user")
@@ -51,13 +52,15 @@ async def login_user(telegram_data: Authorization):
             detail="Not valid telegram data",
         )
 
+    user_tg_data = json.loads(user_tg_data)
+
     user_data = await database.fetchrow(
         """
         UPDATE users.user
-        SET last_login = $3 and active = true
+        SET last_login = current_timestamp, active = true
         WHERE telegram_id = $1 AND username = $2
         RETURNING user_id
-        """, user_tg_data.get("id"), user_tg_data.get("username"), datetime.now()
+        """, user_tg_data.get("id"), user_tg_data.get("username")
     )
 
     user_id = int(user_data.get('user_id'))
