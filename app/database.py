@@ -52,9 +52,16 @@ class RedisDatabase:
 
         if stored_data:
             data = stored_data.decode('utf-8')
-            return data
-        else:
-            return None
+            return json.loads(data)
+        return None
+
+    def get_top_5_tickers_by_volume(self):
+        stored_data = self.r.get('funding:top:5:tickets:volume')
+
+        if stored_data:
+            data = stored_data.decode('utf-8')
+            return json.loads(data)
+        return None
 
 
 database = Database()

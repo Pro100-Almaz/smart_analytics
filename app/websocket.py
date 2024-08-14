@@ -61,6 +61,18 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+def get_merged_data():
+    top_tickers = redis_database.get_top_5_tickers() or {}
+    top_tickers_by_volume = redis_database.get_top_5_tickers_by_volume() or {}
+
+    # Merge the two dictionaries
+    merged_data = {
+        "top_tickers": top_tickers,
+        "top_tickers_by_volume": top_tickers_by_volume
+    }
+
+    return merged_data
+
 @router.get("/test_websocket")
 async def get():
     return HTMLResponse(html)
@@ -71,10 +83,10 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
     await manager.connect(websocket)
     try:
         while True:
-            funding_data = redis_database.get_top_5_tickers()
-            print(funding_data)
+            merged_data = get_merged_data()
+            print(merged_data)
             try:
-                await websocket.send_text(funding_data)
+                await websocket.send_json(merged_data)
             except Exception as e:
                 print(e)
             await asyncio.sleep(60)
