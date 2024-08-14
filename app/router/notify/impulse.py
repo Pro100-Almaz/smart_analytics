@@ -66,9 +66,9 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
         try:
             await database.execute(
                 """
-                INSERT INTO users.user_notification (user_id, notification_type, notify_time, condition, created) 
-                VALUES ($1, 'last_impulse', NULL, $2, $3)
-                """, token_data.get("user_id"), condition, datetime.now()
+                INSERT INTO users.user_notification (user_id, notification_type, notify_time, condition, created, interval) 
+                VALUES ($1, 'last_impulse', NULL, $2, $3, $4)
+                """, token_data.get("user_id"), condition, datetime.now(), impulse_params.interval
             )
         except Exception as e:
             raise HTTPException(
@@ -81,7 +81,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
             await database.execute(
                 """
                 UPDATE users.user_notification
-                SET condition = $2, created = $3
+                SET condition = $2, created = $3, interval = $4
                 WHERE id = (
                     SELECT id
                     FROM users.user_notification
@@ -89,7 +89,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
                     ORDER BY created ASC
                     LIMIT 1
                 );
-                """, token_data.get("user_id"), condition, datetime.now()
+                """, token_data.get("user_id"), condition, datetime.now(), impulse_params.interval
             )
         except Exception as e:
             raise HTTPException(

@@ -87,6 +87,13 @@ async def webhook(update: Update):
                     """, user_id, referring_id, False, 0
                 )
 
+                await database.execute(
+                    """
+                    INSERT INTO users.premium (user_id, status, last_payment, discout) 
+                    VALUES ($1, $2, NULL, NULL)
+                    """, user_id, True
+                )
+
                 return_text = i18n.get_string('bot.success_message', language_code).format(referred_id=telegram_id)
                 bot_return_text = (i18n.get_string('bot.invited_client_welcome_text', language_code).
                                    format(user_nickname=username))
@@ -126,6 +133,13 @@ async def webhook(update: Update):
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
                     RETURNING user_id
                     """, telegram_id, username, None, first_name, last_name, language_code, new_referral_link
+                )
+
+                await database.execute(
+                    """
+                    INSERT INTO users.premium (user_id, status, last_payment, discout) 
+                    VALUES ($1, $2, NULL, NULL)
+                    """, user_id, True
                 )
 
                 bot_return_text = (i18n.get_string('bot.client_welcome_text', language_code).
