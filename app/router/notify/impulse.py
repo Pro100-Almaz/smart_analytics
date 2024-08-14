@@ -1,7 +1,3 @@
-import hashlib
-import os
-import hmac
-import urllib.parse as urlparse
 from datetime import datetime
 from typing import Dict
 
