@@ -8,3 +8,7 @@ app/router/user/__pycache__
 services/__pycache__
 tests/__pycache__
 services/logs
+app/router/notify/__pycache__/
+i18n/__pycache__/
+app.log
+services/logs\\funding_rate.log
