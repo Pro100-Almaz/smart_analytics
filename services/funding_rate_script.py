@@ -11,6 +11,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 from database import database, redis_database
+from tasks import update_stock_data, get_stock_data
 
 
 log_directory = "logs"
@@ -57,6 +58,8 @@ def get_volume_data():
             logging.error(f"Error arose while trying to insert top tickets into Reddis, error message:{e}")
 
         for record in volume_data:
+            update_stock_data.delay(record["symbol"], record["lastPrice"])
+
             try:
                 stock_id = database.execute_with_return(
                     """

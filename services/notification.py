@@ -36,7 +36,14 @@ def last_impulse_notification(time_interval: int):
         """
             SELECT *
             FROM users.user_notification
-            WHERE notification_type = 'last_impulse' AND interval = %s
+            WHERE notification_type = 'last_impulse' AND interval = %s;
         """, (time_interval,)
     )
 
+    for user in users:
+        interval, percent = user[6].split(":")
+
+
+
+
+last_impulse_notification(15)

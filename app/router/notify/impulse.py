@@ -46,17 +46,18 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
     status_to_add = await database.fetch(
         """
             WITH notification_count AS (
-                SELECT COUNT(*)
+                SELECT COUNT(*) AS count
                 FROM users.user_notification
                 WHERE user_id = $1 AND notification_type = 'last_impulse'
             )
             SELECT 
                 CASE 
-                    WHEN status = true THEN notification_count < 3
-                    ELSE notification_count < 1
+                    WHEN p.status = true THEN nc.count < 3
+                    ELSE nc.count < 1
                 END AS allowed_to_add
-            FROM users.premium
-            WHERE user_id = $1
+            FROM users.premium p
+            CROSS JOIN notification_count nc
+            WHERE p.user_id = $1;
         """, token_data.get("user_id")
     )
 

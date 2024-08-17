@@ -17,6 +17,7 @@ load_dotenv()
 # Define your Telegram bot token
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 WEBHOOK_URL = os.getenv('BASE_URL') + "/webhook"
+DEBUG = os.getenv('DEBUG', False)
 
 router = APIRouter()
 
@@ -171,21 +172,25 @@ async def webhook(update: Update):
     return {"Status": "ok"}
 
 
-# @router.on_event("startup")
-# async def on_startup():
-#     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook"
-#     payload = {"url": WEBHOOK_URL}
-#     response = requests.post(url, json=payload)
-#     if response.status_code != 200:
-#         raise HTTPException(status_code=response.status_code, detail="Failed to set webhook")
-#     print(f"Webhook set: {WEBHOOK_URL}")
-#     logger.info("Webhook set!")
-#
-#
-# @router.on_event("shutdown")
-# async def on_shutdown():
-#     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteWebhook"
-#     response = requests.post(url)
-#     if response.status_code != 200:
-#         raise HTTPException(status_code=response.status_code, detail="Failed to delete webhook")
-#     logger.info("Webhook dropped!")
+@router.on_event("startup")
+async def on_startup():
+    if DEBUG:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook"
+        payload = {"url": WEBHOOK_URL}
+        response = requests.post(url, json=payload)
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail="Failed to set webhook")
+        print(f"Webhook set: {WEBHOOK_URL}")
+        logger.info("Webhook set!")
+    else:
+        print("Production server!")
+
+
+@router.on_event("shutdown")
+async def on_shutdown():
+    if DEBUG:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteWebhook"
+        response = requests.post(url)
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail="Failed to delete webhook")
+        logger.info("Webhook dropped!")

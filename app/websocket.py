@@ -26,7 +26,7 @@ html = """
         <script>
             var client_id = Date.now()
             document.querySelector("#ws-id").textContent = client_id;
-            var ws = new WebSocket(`ws://localhost:8000/ws/top_5_fundings/${client_id}`);
+            var ws = new WebSocket(`wss://286c-87-255-216-104.ngrok-free.app/ws/top_5_fundings/${client_id}`);
             ws.onmessage = function(event) {
                 console.log(event.data);
             };
@@ -83,15 +83,24 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
     await manager.connect(websocket)
     try:
         while True:
-            merged_data = get_merged_data()
-            print(merged_data)
             try:
-                await websocket.send_json(merged_data)
-            except Exception as e:
-                print(e)
-            await asyncio.sleep(60)
+                merged_data = get_merged_data()
+                if websocket.client_state != websocket.client_state.DISCONNECTED:
+                    await websocket.send_json(merged_data)
+
+                await asyncio.sleep(60)
+
+            except asyncio.TimeoutError:
+                print("No data received within timeout duration. Closing connection.")
+                await websocket.close()
+                break
+
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
-    finally:
-        await websocket.close()
+        print("Client disconnected")
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+
+        if websocket.client_state != websocket.client_state.DISCONNECTED:
+            await websocket.close()
 
