@@ -12,3 +12,5 @@ app/router/notify/__pycache__/
 i18n/__pycache__/
 app.log
 services/logs\\funding_rate.log
+
+node_modules

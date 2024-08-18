@@ -81,6 +81,7 @@ async def get():
 @router.websocket("/top_5_fundings/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int):
     await manager.connect(websocket)
+    print(manager.active_connections)
     try:
         while True:
             try:
@@ -103,4 +104,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
 
         if websocket.client_state != websocket.client_state.DISCONNECTED:
             await websocket.close()
+
+        manager.disconnect(websocket)
 
