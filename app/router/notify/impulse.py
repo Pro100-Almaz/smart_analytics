@@ -61,7 +61,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
         """, token_data.get("user_id")
     )
 
-    condition = f"{impulse_params.interval}:{impulse_params.percentage}"
+    condition = f"{impulse_params.interval}_min:{impulse_params.percentage}"
 
     if status_to_add[0].get("allowed_to_add"):
         try:

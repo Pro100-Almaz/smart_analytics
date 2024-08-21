@@ -55,7 +55,7 @@ def get_volume_data():
             json_data = json.dumps(redis_data)
             redis_database.set('funding:top:5:tickets:volume', json_data)
         except Exception as e:
-            logging.error(f"Error arose while trying to insert top tickets into Reddis, error message:{e}")
+            logging.error(f"Error arose while trying to insert top tickets by volume into Reddis, error message:{e}")
 
         for record in volume_data:
             update_stock_data.delay(record["symbol"], float(record["lastPrice"]))
@@ -177,8 +177,8 @@ def get_funding_data():
 
     return False
 
-schedule.every(60).seconds.do(get_funding_data)
-schedule.every(30).seconds.do(get_volume_data)
+# schedule.every(60).seconds.do(get_funding_data)
+schedule.every(60).seconds.do(get_volume_data)
 
 while True:
     schedule.run_pending()

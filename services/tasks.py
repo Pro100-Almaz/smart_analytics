@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+
 from celery import shared_task
 from celery_app import Celery
 from celery.signals import worker_process_init
@@ -5,11 +8,15 @@ import redis
 import pickle
 from collections import deque
 
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+from database import database, redis_database as redis_client
+
+load_dotenv()
 
 app = Celery('tasks', broker='redis://localhost:6379/0', backend='redis://localhost:6379/0')
 
 SHARED_DICT_KEY = "binance:ticker:data"
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+
 
 @shared_task
 def update_stock_data(stock_symbol, new_data: float):
@@ -67,11 +74,33 @@ def update_stock_data(stock_symbol, new_data: float):
     redis_client.set(stock_key, pickle.dumps(shared_dict))
     redis_client.expire(stock_key, 3600)
 
-    return shared_dict[stock_symbol]
 
 @shared_task
-def get_stock_data():
-    shared_dict = pickle.loads(redis_client.get(f"{SHARED_DICT_KEY}:*"))
-    print(shared_dict)
+def notify_by_telegram(active_name, percent, user_id):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
-    return shared_dict or None
+    payload = {
+        "chat_id": user_id,
+        "text": f"{active_name} -> {percent}"
+    }
+
+    if user_id == 123:
+        reply_markup = {
+            "inline_keyboard": [[{
+                "text": "Lets trade!",
+                "web_app": {"url": "https://smart-trade-kappa.vercel.app/"}
+            }]]
+        }
+
+        payload["reply_markup"] = reply_markup
+
+    response = requests.post(url, json=payload)
+
+    if response.status_code == 200:
+        pass
+    else:
+        database.execute(
+            """
+
+            """
+        )
