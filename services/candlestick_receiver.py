@@ -1,16 +1,16 @@
+import json
 from datetime import datetime
 import logging
 import requests
 import asyncio
 import aiohttp
-import signal
 import ssl
 import os
 
 from dotenv import load_dotenv
+from tasks import update_stock_data, push_stock_data
+from notification import last_impulse_notification
 
-from telegram import Bot
-from telegram.error import TelegramError
 
 logging.basicConfig(filename='app.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -58,19 +58,6 @@ def get_symbols():
     return result_list
 
 
-def send_message(text, attempt=1):
-    alert_bot = Bot('7288064998:AAH1ggTaIexAzsDKGXI-fOQDOKY7V5Bc9Yk')
-    chat_id = '588330621'
-    try:
-        alert_bot.sendMessage(chat_id=chat_id, text=text)
-        logger.info(f'Message sent to {chat_id}: {text}')
-    except TelegramError as e:
-        logger.error(f'Attempt {attempt}: Failed to send message: {e.message}')
-        if attempt < 5:
-            attempt += 1
-            send_message(chat_id, text)
-
-
 def unix_to_date(unix):
     date = datetime.utcfromtimestamp((unix / 1000) + 18000).strftime('%d-%m-%Y | %H:%M')
     return date
@@ -84,6 +71,7 @@ def get_chunk_of_data(l, n):
 async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
     asset_streams = [f"{str(asset).lower()}@kline_1m" for asset in chunk_of_assets]
     uri = f"wss://fstream.binance.com/stream?streams={'/'.join(asset_streams)}"
+    phase_minute = None
 
     while True:
         try:
@@ -92,7 +80,19 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
                 async with session.ws_connect(uri, proxy=proxy) as ws:
                     async for msg in ws:
                         if msg.type == aiohttp.WSMsgType.TEXT:
-                            print(f"Received data: {msg.data}")
+                            active_data = json.loads(msg.data)
+                            current_time = unix_to_date(active_data.get('data', {}).get('k', {}).get('T'))
+                            active_name = active_data.get('data', {}).get('s')
+                            last_value = float(active_data.get('data', {}).get('k', {}).get('l'))
+
+                            if phase_minute != current_time:
+                                phase_minute = current_time
+                                push_stock_data.delay(active_name, last_value)
+                            else:
+                                update_stock_data.delay(active_name, last_value)
+
+                            last_impulse_notification()
+
                         elif msg.type == aiohttp.WSMsgType.PING:
                             await ws.pong(msg.data)
                             logger.info("Ping received and pong sent")
@@ -102,7 +102,7 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
                             logger.error("WebSocket closed/error")
                             break
         except Exception as e:
-            logger.error(f"An error occurred with proxy {proxy}: {e}")
+            logger.error(f"An error occurred while processing data, at proxy {proxy}: {e}")
 
         logger.error(f"Reconnecting to Binance using proxy {proxy}...")
         await asyncio.sleep(5)

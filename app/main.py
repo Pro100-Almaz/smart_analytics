@@ -1,3 +1,5 @@
+from sys import prefix
+
 from fastapi import FastAPI, Request, Response
 import json
 from app.database import database
@@ -9,6 +11,7 @@ from app.webhook import router as webhook_router
 from app.router.user import router as user_router
 from app.websocket import router as websocket_router
 from app.router.notify import router as notify_router
+from app.router.data import router as data_router
 from .logger import logger
 
 app = FastAPI(title="My API", version="4.0", description="API description", openapi_version="3.0.2")
@@ -56,6 +59,7 @@ app.include_router(webhook_router, prefix="/webhook")
 app.include_router(user_router, prefix="/user")
 app.include_router(websocket_router, prefix="/ws")
 app.include_router(notify_router, prefix="/notify")
+app.include_router(data_router, prefix="/data")
 
 
 @app.on_event("startup")

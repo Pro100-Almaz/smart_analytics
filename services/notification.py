@@ -54,7 +54,6 @@ def last_impulse_notification():
         """
     )
 
-
     for user in users:
         user_interval, user_percent = user[1].split(":")
         user_percent = float(user_percent)
@@ -63,9 +62,4 @@ def last_impulse_notification():
             temp_data = data_intervals.get(user_interval, None)
 
             if temp_data and abs(temp_data.get('diff', {})[1]) >= user_percent:
-                print("Found Percent!")
                 notify_by_telegram.delay(data_active, temp_data.get('diff', {})[1], user[0])
-
-
-
-last_impulse_notification()
