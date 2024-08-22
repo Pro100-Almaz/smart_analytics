@@ -75,11 +75,22 @@ def push_stock_data(stock_symbol, new_data: float):
     redis_client.set(stock_key, pickle.dumps(shared_dict))
     redis_client.expire(stock_key, 3600)
 
+    cursor = 0
+    while True:
+        cursor, keys = redis_client.scan(cursor=cursor, match='celery-task-meta*', count=10000)
+        if keys:
+            redis_client.delete(*keys)
+        if cursor == 0:
+            break
+
 
 @shared_task
 def update_stock_data(stock_symbol, new_data: float):
     stock_key = f"{SHARED_DICT_KEY}:{stock_symbol}"
-    shared_dict = pickle.loads(redis_client.get(stock_key))
+    try:
+        shared_dict = pickle.loads(redis_client.get(stock_key))
+    except:
+        return "create_stock_key"
 
     for interval_type, current_data in shared_dict.items():
         if interval_type == "1_min":
@@ -102,6 +113,7 @@ def update_stock_data(stock_symbol, new_data: float):
 
     redis_client.set(stock_key, pickle.dumps(shared_dict))
     redis_client.expire(stock_key, 3600)
+    return "success"
 
 
 @shared_task

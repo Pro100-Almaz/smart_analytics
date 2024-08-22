@@ -1,32 +1,10 @@
-import requests
-import os
-
-import schedule
-import logging
 import pickle
-from logging.handlers import RotatingFileHandler
 
 from database import database, redis_database
 from tasks import notify_by_telegram
 
-
-log_directory = "logs"
-log_filename = "notification.log"
-log_file_path = os.path.join(log_directory, log_filename)
-
-if not os.path.exists(log_directory):
-    os.makedirs(log_directory)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-
-
 def last_impulse_notification():
+    print("IN last_impulse_notification")
     database.connect()
 
     prefix = "binance:ticker:data:"

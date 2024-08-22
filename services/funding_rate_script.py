@@ -12,21 +12,21 @@ from logging.handlers import RotatingFileHandler
 
 from database import database, redis_database
 
-
-log_directory = "logs"
-log_filename = "funding_rate.log"
-log_file_path = os.path.join(log_directory, log_filename)
-
-if not os.path.exists(log_directory):
-    os.makedirs(log_directory)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
-
-handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+#
+# log_directory = "logs"
+# log_filename = "funding_rate.log"
+# log_file_path = os.path.join(log_directory, log_filename)
+#
+# if not os.path.exists(log_directory):
+#     os.makedirs(log_directory)
+#
+# logger = logging.getLogger(__name__)
+# logger.setLevel(logging.WARNING)
+#
+# handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
+# formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# handler.setFormatter(formatter)
+# logger.addHandler(handler)
 
 except_list = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "BTCDOMUSDT"]
 
@@ -156,14 +156,14 @@ def get_funding_data():
             market_price = Decimal(record["markPrice"]).quantize(Decimal('.00000001'), rounding=ROUND_DOWN)
 
             seconds = record["fundingTime"] / 1000.0
-            timestamp = datetime.datetime.fromtimestamp(seconds)
+            time_value = datetime.datetime.fromtimestamp(seconds, tz=datetime.timezone.utc)
 
             try:
                 database.execute(
                     """
                         INSERT INTO data_history.funding_data (stock_id, funding_rate, mark_price, funding_time)
                         VALUES (%s, %s, %s, %s)
-                    """, (stock_id, funding_rate, market_price, timestamp)
+                    """, (stock_id, funding_rate, market_price, time_value)
                 )
             except Exception as e:
                 logging.error(f"Error arose while trying to insert funding data into DB, error message:{e}")
@@ -174,8 +174,8 @@ def get_funding_data():
 
     return False
 
-# schedule.every(60).seconds.do(get_funding_data)
-schedule.every(60).seconds.do(get_volume_data)
+schedule.every(60).seconds.do(get_funding_data)
+# schedule.every(60).seconds.do(get_volume_data)
 
 while True:
     schedule.run_pending()

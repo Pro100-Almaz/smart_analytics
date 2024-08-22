@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import logging
 import requests
 import asyncio
@@ -59,7 +59,14 @@ def get_symbols():
 
 
 def unix_to_date(unix):
-    date = datetime.utcfromtimestamp((unix / 1000) + 18000).strftime('%d-%m-%Y | %H:%M')
+    timestamp_in_seconds = unix / 1000
+
+    utc_time = datetime.fromtimestamp(timestamp_in_seconds, tz=timezone.utc)
+
+    adjusted_time = utc_time + timedelta(hours=5)
+
+    # Format the adjusted time
+    date = adjusted_time.strftime('%d-%m-%Y | %H:%M')
     return date
 
 
@@ -86,10 +93,16 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
                             last_value = float(active_data.get('data', {}).get('k', {}).get('l'))
 
                             if phase_minute != current_time:
+                                print("Pushing stock data")
                                 phase_minute = current_time
                                 push_stock_data.delay(active_name, last_value)
                             else:
-                                update_stock_data.delay(active_name, last_value)
+                                res = update_stock_data.delay(active_name, last_value)
+
+                                if res == "create_stock_key":
+                                    push_stock_data.delay(active_name, last_value)
+                                else:
+                                    continue
 
                             last_impulse_notification()
 
