@@ -25,7 +25,7 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
     else:
         time_gap = 1440
 
-    sql_query = f"""
+    sql_query = """
         WITH NumberedRows AS (
             SELECT 
                 *,
@@ -38,14 +38,14 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
         FROM 
             NumberedRows
         WHERE 
-            rn % {time_gap} = 1  
+            rn % :time_gap = 1  
         ORDER BY 
             stock_id, 
             funding_time;
         """
 
     engine = create_engine(os.getenv('DATABASE_URL'))
-    df = pd.read_sql_query(sql_query, con=engine)
+    df = pd.read_sql_query(sql_query, con=engine, params={'time_gap': time_gap})
 
     funding_rates = df['funding_rate'].astype(float).tolist()
 
