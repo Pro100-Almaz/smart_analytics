@@ -66,7 +66,7 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
     csv_file_path = f"dataframes/funding_data_{user_id}.csv"
     df.to_csv(csv_file_path, index=False)
 
-    database.execute(
+    await database.execute(
         """
         INSERT INTO data_history.funding_data_history (user_id, created, positive_count, negative_count, neutral_count) 
         VALUES ($1, $2, $3, $4, $5);
