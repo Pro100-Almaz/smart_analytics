@@ -45,8 +45,7 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
         """
 
     engine = create_engine(os.getenv('DATABASE_URL'))
-    df = pd.read_sql_query(sql_query, engine)
-    engine.dispose()
+    df = pd.read_sql_query(sql_query, con=engine)
 
     funding_rates = df['funding_rate'].astype(float).tolist()
 
@@ -64,6 +63,7 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
     user_id = token_data.get("user_id")
     csv_file_path = f"dataframes/funding_data_{user_id}.csv"
     df.to_csv(csv_file_path, index=False)
+    engine.dispose()
 
     await database.execute(
         """
