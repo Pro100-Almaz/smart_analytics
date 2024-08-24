@@ -12,6 +12,7 @@ from app.router.user import router as user_router
 from app.websocket import router as websocket_router
 from app.router.notify import router as notify_router
 from app.router.data import router as data_router
+from app.router.main import router as main_router
 from .logger import logger
 
 app = FastAPI(title="My API", version="4.0", description="API description", openapi_version="3.0.2")
@@ -24,6 +25,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 class LogMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -55,6 +57,7 @@ class LogMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(LogMiddleware)
 
+app.include_router(main_router)
 app.include_router(webhook_router, prefix="/webhook")
 app.include_router(user_router, prefix="/user")
 app.include_router(websocket_router, prefix="/ws")

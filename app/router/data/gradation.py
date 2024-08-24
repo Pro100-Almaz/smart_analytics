@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 
-@router.get("/gradation_growth", tags=["notify"])
+@router.get("/gradation_growth", tags=["data"])
 async def get_impulse(interval: int = Query(5), sort_type: str = Query(None, max_length=50), token_data: Dict = Depends(JWTBearer())):
     impulses = await database.fetch(
         """
