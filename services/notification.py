@@ -78,7 +78,7 @@ def last_impulse_notification():
                 )
 
                 if is_it_sent:
-                    return "already_sent"
+                    continue
 
                 percent = temp_data.get('diff', {})[1]
 
