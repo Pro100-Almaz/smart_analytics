@@ -26,22 +26,37 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
         time_gap = 1440
 
     sql_query = f"""
-        WITH NumberedRows AS (
-            SELECT 
+        WITH NumberedData AS (
+            SELECT
                 *,
                 ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY funding_time) AS rn
-            FROM 
+            FROM
                 data_history.funding_data
+        ),
+        IntervalData AS (
+            SELECT
+                stock_id,
+                funding_time,
+                funding_rate,
+                mark_price,
+                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY rn) AS interval_position
+            FROM
+                NumberedData
+            WHERE
+                rn % {time_gap} = 0 
         )
-        SELECT 
-            *
-        FROM 
-            NumberedRows
-        WHERE 
-            rn % {time_gap} = 1  
-        ORDER BY 
-            stock_id, 
-            funding_time;
+        SELECT
+            interval_position,
+            array_agg(stock_id ORDER BY stock_id) AS stock_ids,
+            array_agg(funding_time ORDER BY stock_id) AS funding_times,
+            array_agg(funding_rate ORDER BY stock_id) AS funding_rates,
+            array_agg(mark_price ORDER BY stock_id) AS mark_prices
+        FROM
+            IntervalData
+        GROUP BY
+            interval_position
+        ORDER BY
+            interval_position;
         """
 
     conn = psycopg2.connect(os.getenv('DATABASE_URL'))
