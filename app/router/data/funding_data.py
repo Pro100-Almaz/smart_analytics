@@ -18,8 +18,6 @@ router = APIRouter()
 
 @router.get("/funding_data", tags=["data"])
 async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBearer())):
-    conn = psycopg2.connect(os.getenv('DATABASE_URL'))
-
     if interval == 1:
         time_gap = 60
     elif interval == 7:
@@ -46,8 +44,7 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
             funding_time;
         """
 
-    df = pd.read_sql_query(sql_query, conn)
-    conn.close()
+    df = pd.read_sql_query(sql_query, os.getenv('DATABASE_URL'))
 
     funding_rates = df['funding_rate'].astype(float).tolist()
 
