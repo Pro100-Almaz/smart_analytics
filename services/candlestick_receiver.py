@@ -116,7 +116,7 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
             print("Error: ", e)
 
         logger.error(f"Reconnecting to Binance using proxy {proxy}...")
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
 
 
 # async def handle_exit(signum, frame):

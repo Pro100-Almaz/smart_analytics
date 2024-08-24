@@ -50,7 +50,6 @@ def last_impulse_notification():
             temp_data = data_intervals.get(user_interval, None)
 
             if temp_data and abs(temp_data.get('diff', {})[1]) >= user_percent:
-                print("Find percent")
                 telegram_id = database.execute_with_return(
                     """
                         SELECT telegram_id
@@ -78,7 +77,7 @@ def last_impulse_notification():
                     """, (active_name, telegram_id)
                 )
 
-                if is_it_sent[0][0]:
+                if is_it_sent:
                     return "already_sent"
 
                 percent = temp_data.get('diff', {})[1]
