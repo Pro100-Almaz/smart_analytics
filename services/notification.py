@@ -96,7 +96,7 @@ def last_impulse_notification():
                     """
                         INSERT INTO users.notification (type, date, text, status, active_name, telegram_id)
                         VALUES (%s, current_timestamp, %s, %s, %s, %s);
-                    """, (user[0], response.text, response.ok, active_name, telegram_id)
+                    """, (user[2], response.text, response.ok, active_name, telegram_id)
                 )
 
                 return f"send_notify to user: {user[0]}"
