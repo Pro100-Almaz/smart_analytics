@@ -4,7 +4,7 @@ from typing import Dict
 import os
 from dotenv import load_dotenv
 import pandas as pd
-from sqlalchemy import create_engine
+import psycopg2
 
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 
@@ -44,9 +44,9 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
             funding_time;
         """
 
-    engine = create_engine(os.getenv('DATABASE_URL'))
-    with engine.connect() as conn, conn.begin():
-        df = pd.read_sql_query(sql_query, con=engine)
+    conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+    df = pd.read_sql_query(sql_query, con=conn)
+    conn.close()
 
     funding_rates = df['funding_rate'].astype(float).tolist()
 
@@ -64,7 +64,6 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
     user_id = token_data.get("user_id")
     csv_file_path = f"dataframes/funding_data_{user_id}.csv"
     df.to_csv(csv_file_path, index=False)
-    engine.dispose()
 
     await database.execute(
         """
