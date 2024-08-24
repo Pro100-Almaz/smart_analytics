@@ -26,10 +26,17 @@ import requests
 from time import sleep
 import datetime
 
-for i in range(1000):
-    volume_response = requests.get('https://fapi.binance.com/fapi/v1/fundingRate')
-    if volume_response.status_code == 200:
-        volume_data = volume_response.json()
-        print(volume_data[0])
-        print(datetime.datetime.fromtimestamp(volume_data[0]["fundingTime"] / 1000.0))
-        sleep(60)
+# for i in range(1000):
+#     volume_response = requests.get('https://fapi.binance.com/fapi/v1/fundingRate')
+#     if volume_response.status_code == 200:
+#         volume_data = volume_response.json()
+#         print(volume_data[0])
+#         print(datetime.datetime.fromtimestamp(volume_data[0]["fundingTime"] / 1000.0))
+#         sleep(60)
+
+from celery import Celery
+
+app = Celery('stock_updater')
+
+# Purge all tasks from the specified queue
+app.control.purge()

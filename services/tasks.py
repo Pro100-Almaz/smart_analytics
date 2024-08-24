@@ -4,8 +4,8 @@ import requests
 from dotenv import load_dotenv
 
 from celery import shared_task
-from celery_app import Celery
-from celery.signals import worker_process_init
+from celery_app import app
+from celery.signals import worker_process_init, worker_shutdown
 import pickle
 from collections import deque
 
@@ -13,13 +13,29 @@ from database import database, redis_database as redis_client
 
 load_dotenv()
 
-app = Celery('tasks', broker='redis://localhost:6379/0', backend='redis://localhost:6379/0')
-
 SHARED_DICT_KEY = "binance:ticker:data"
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
 
-@shared_task
+# @worker_process_init.connect
+# def connect_database(**kwargs):
+#     try:
+#         database.connect()
+#         print("Database connected successfully.")
+#     except Exception as e:
+#         print(f"Error connecting to database: {e}")
+#
+#
+# @worker_shutdown.connect
+# def close_database_connection(**kwargs):
+#     try:
+#         database.disconnect()
+#         print("Database connection closed successfully.")
+#     except Exception as e:
+#         print(f"Error closing database connection: {e}")
+
+
+@app.task
 def push_stock_data(stock_symbol, new_data: float):
     stock_key = f"{SHARED_DICT_KEY}:{stock_symbol}"
 
@@ -84,7 +100,7 @@ def push_stock_data(stock_symbol, new_data: float):
             break
 
 
-@shared_task
+@app.task
 def update_stock_data(stock_symbol, new_data: float):
     stock_key = f"{SHARED_DICT_KEY}:{stock_symbol}"
     try:
@@ -116,32 +132,35 @@ def update_stock_data(stock_symbol, new_data: float):
     return "success"
 
 
-@shared_task
-def notify_by_telegram(active_name, percent, user_id):
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+# @app.task
+# def notify_by_telegram(active_name, percent, telegram_id):
+#     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+#
+#     payload = {
+#         "chat_id": telegram_id,
+#         "text": "\n".join(["🔔❗️Обратите внимание❗️🔔",
+#                            f"Торговая пара {active_name} дала импульс цены в {percent}% 🔴📈"])
+#     }
+#
+#     # if user_id == 123:
+#     #     reply_markup = {
+#     #         "inline_keyboard": [[{
+#     #             "text": "Lets trade!",
+#     #             "web_app": {"url": "https://smart-trade-kappa.vercel.app/"}
+#     #         }]]
+#     #     }
+#     #
+#     #     payload["reply_markup"] = reply_markup
+#
+#     response = requests.post(url, json=payload)
+#     print(response)
+#
+#     database.execute(
+#         """
+#             INSERT INTO users.notification (type, date, text, status)
+#             VALUES (%s, current_timestamp, %s, %s);
+#         """, (1, response.text, response.status_code)
+#     )
+#     return response
 
-    payload = {
-        "chat_id": user_id,
-        "text": f"{active_name} -> {percent}"
-    }
 
-    if user_id == 123:
-        reply_markup = {
-            "inline_keyboard": [[{
-                "text": "Lets trade!",
-                "web_app": {"url": "https://smart-trade-kappa.vercel.app/"}
-            }]]
-        }
-
-        payload["reply_markup"] = reply_markup
-
-    response = requests.post(url, json=payload)
-
-    if response.status_code == 200:
-        pass
-    else:
-        database.execute(
-            """
-                
-            """
-        )

@@ -93,7 +93,6 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
                             last_value = float(active_data.get('data', {}).get('k', {}).get('l'))
 
                             if phase_minute != current_time:
-                                print("Pushing stock data")
                                 phase_minute = current_time
                                 push_stock_data.delay(active_name, last_value)
                             else:
@@ -101,8 +100,6 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
 
                                 if res == "create_stock_key":
                                     push_stock_data.delay(active_name, last_value)
-                                else:
-                                    continue
 
                             last_impulse_notification()
 
@@ -116,6 +113,7 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
                             break
         except Exception as e:
             logger.error(f"An error occurred while processing data, at proxy {proxy}: {e}")
+            print("Error: ", e)
 
         logger.error(f"Reconnecting to Binance using proxy {proxy}...")
         await asyncio.sleep(5)
