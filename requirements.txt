@@ -33,8 +33,11 @@ MarkupSafe==2.1.5
 mdurl==0.1.2
 msgpack==1.0.8
 multidict==6.0.5
+numpy==2.1.0
+pandas==2.2.2
 passlib==1.7.4
 prompt_toolkit==3.0.47
+psycopg2==2.9.9
 psycopg2-binary==2.9.9
 pydantic==2.8.2
 pydantic_core==2.20.1
@@ -44,6 +47,7 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-multipart==0.0.9
 python-telegram-bot==21.4
+pytz==2024.1
 PyYAML==6.0.1
 redis==5.0.7
 requests==2.32.3
