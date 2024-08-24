@@ -68,7 +68,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
             await database.execute(
                 """
                 INSERT INTO users.user_notification (user_id, notification_type, notify_time, condition, created) 
-                VALUES ($1, 'last_impulse', NULL, $2, $3, $4)
+                VALUES ($1, 'last_impulse', NULL, $2, $3)
                 """, token_data.get("user_id"), condition, datetime.now()
             )
         except Exception as e:
