@@ -49,7 +49,7 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
     df = pd.read_sql_query(sql_query, conn)
     conn.close()
 
-    funding_rates = df['fundingRate'].astype(float).tolist()
+    funding_rates = df['funding_rate'].astype(float).tolist()
 
     positive_funding_rate = [rate for rate in funding_rates if rate > 0.01]  # положительные считаются только от 0.01%
     positive_funding_rate_quantity = len(positive_funding_rate)
