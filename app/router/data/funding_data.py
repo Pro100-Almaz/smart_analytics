@@ -45,7 +45,8 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
         """
 
     engine = create_engine(os.getenv('DATABASE_URL'))
-    df = pd.read_sql_query(sql_query, con=engine, params={'time_gap': time_gap})
+    params = {'time_gap': time_gap}
+    df = pd.read_sql_query(sql_query, con=engine, params=params)
 
     funding_rates = df['funding_rate'].astype(float).tolist()
 
