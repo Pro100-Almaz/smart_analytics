@@ -82,6 +82,25 @@ def get_volume_data():
             close_time = datetime.datetime.fromtimestamp(record["closeTime"] / 1000.0)
 
             try:
+                records_count = database.execute_with_return(
+                    """
+                        SELECT COUNT(*) FROM data_history.volume_data WHERE stock_id = %s;
+                    """, (stock_id,)
+                )
+
+                if records_count[0][0] >= 43200:
+                    database.execute("""
+                                        DELETE FROM data_history.volume_data
+                                        WHERE stock_id = (
+                                            SELECT stock_id FROM data_history.volume_data
+                                            WHERE stock_id = %s
+                                            ORDER BY open_time ASC
+                                            LIMIT 1
+                                        );
+                        """, (stock_id,))
+
+                    print(f"Deleted the oldest record with column value '{stock_id}'")
+
                 database.execute(
                     """
                         INSERT INTO data_history.volume_data (stock_id, price_change, price_change_percent, 
@@ -99,9 +118,6 @@ def get_volume_data():
                 return "Error with DB"
 
         database.disconnect()
-        return True
-
-    return False
 
 
 def get_funding_data():
@@ -159,20 +175,38 @@ def get_funding_data():
             time_value = datetime.datetime.fromtimestamp(seconds, tz=datetime.timezone.utc)
 
             try:
+                records_count = database.execute_with_return(
+                    """
+                        SELECT COUNT(*) FROM data_history.funding_data WHERE stock_id = %s;
+                    """, (stock_id,)
+                )
+
+                if records_count[0][0] >= 43200:
+                    database.execute("""
+                                DELETE FROM data_history.funding_data
+                                WHERE stock_id = (
+                                    SELECT stock_id FROM data_history.funding_data
+                                    WHERE stock_id = %s
+                                    ORDER BY funding_time ASC
+                                    LIMIT 1
+                                );
+                            """, (stock_id,))
+
+                    print(f"Deleted the oldest record with column value '{stock_id}'")
+
                 database.execute(
                     """
                         INSERT INTO data_history.funding_data (stock_id, funding_rate, mark_price, funding_time)
                         VALUES (%s, %s, %s, %s)
                     """, (stock_id, funding_rate, market_price, time_value)
                 )
+
             except Exception as e:
                 logging.error(f"Error arose while trying to insert funding data into DB, error message:{e}")
                 return "Error with DB"
 
         database.disconnect()
-        return True
 
-    return False
 
 schedule.every(60).seconds.do(get_funding_data)
 schedule.every(60).seconds.do(get_volume_data)
