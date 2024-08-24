@@ -127,7 +127,7 @@ async def webhook(update: Update):
 
         if user_id is None:
             try:
-                await database.execute(
+                result = await database.execute(
                     """
                     INSERT INTO users.user (telegram_id, username, profile_photo, first_name, last_name, 
                     language_code, referral_link)
@@ -135,6 +135,8 @@ async def webhook(update: Update):
                     RETURNING user_id
                     """, telegram_id, username, None, first_name, last_name, language_code, new_referral_link
                 )
+
+                user_id = int(result[0].get('user_id'))
 
                 await database.execute(
                     """
