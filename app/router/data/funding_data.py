@@ -70,8 +70,14 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
         """
         INSERT INTO data_history.funding_data_history (user_id, created, positive_count, negative_count, neutral_count) 
         VALUES ($1, $2, $3, $4, $5);
-        """, user_id, datetime.now(), positive_funding_rate, negative_funding_rate, neutral_funding_rate
+        """, user_id, datetime.now(), positive_funding_rate_quantity, negative_funding_rate_quantity, neutral_funding_rate_quantity
     )
 
-    return {"status": "success", "positive": positive_funding_rate_quantity, "negative": negative_funding_rate_quantity,
-            "neutral": neutral_funding_rate_quantity}
+    return {"status": "success",
+            "positive_quantity": positive_funding_rate_quantity,
+            "negative_quantity": negative_funding_rate_quantity,
+            "neutral_quantity": neutral_funding_rate_quantity,
+            "positive_rate": positive_funding_rate,
+            "negative_rate": negative_funding_rate,
+            "neutral_rate": neutral_funding_rate
+            }
