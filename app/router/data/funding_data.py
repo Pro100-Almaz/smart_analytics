@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Dict
 
 import os
+import csv
 from dotenv import load_dotenv
 import pandas as pd
 import psycopg2
@@ -21,6 +22,18 @@ router = APIRouter()
 async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBearer())):
     funding_response = requests.get("https://fapi.binance.com/fapi/v1/fundingRate")
     if funding_response.status_code == 200:
+        user_id = token_data.get("user_id")
+        csv_file_path = f"dataframes/funding_data_{user_id}.csv"
+
+        with open(csv_file_path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["symbol", "fundingTime", "fundingRate", "markPrice"])
+
+        return_value = {}
+        positive_funding_rate_quantity = 0
+        negative_funding_rate_quantity = 0
+        neutral_funding_rate_quantity = 0
+
         if interval == 1:
             time_gap = 60
         elif interval == 7:
@@ -31,6 +44,13 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
         funding_data = funding_response.json()
 
         for record in funding_data:
+            if float(record['fundingRate']) > 0.01:
+                positive_funding_rate_quantity += 1
+            elif float(record['fundingRate']) != 0.005 and float(record['fundingRate']) < 0.01:
+                negative_funding_rate_quantity += 1
+            elif float(record['fundingRate']) == 0.01 or float(record['fundingRate']) == 0.05:
+                neutral_funding_rate_quantity += 1
+
             stock_id = await database.fetchrow(
                 """
                 SELECT stock_id
@@ -39,7 +59,7 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
                 """, record["symbol"]
             )
 
-            stock_id = stock_id[0][0]
+            stock_id = stock_id.get("stock_id")
 
             stock_data = await database.fetch(
                 """
@@ -63,44 +83,40 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
                 """, stock_id, time_gap
             )
 
+            temp_list = []
+
             for data in stock_data:
-                print(data)
+                if data.get("rn") not in return_value:
+                    return_value[data.get("rn")] = {
+                        "positive": 0,
+                        "negative": 0,
+                        "neutral": 0
+                    }
 
+                if data.get("funding_rate") > 0.01:
+                    return_value[data.get("rn")]["positive"] += 1
+                if 0.005 != data.get("funding_rate") < 0.01:
+                    return_value[data.get("rn")]["negative"] += 1
+                if data.get("funding_rate") == 0.01 or data.get("funding_rate") == 0.05:
+                    return_value[data.get("rn")]["neutral"] += 1
 
-    # conn = psycopg2.connect(os.getenv('DATABASE_URL'))
-    # df = pd.read_sql_query(sql_query, con=conn)
-    # conn.close()
+            with open(csv_file_path, mode='a', newline='') as file:
+                writer = csv.writer(file)
 
-    # funding_rates = df['funding_rate'].astype(float).tolist()
-    #
-    # positive_funding_rate = [rate for rate in funding_rates if rate > 0.01]  # положительные считаются только от 0.01%
-    # positive_funding_rate_quantity = len(positive_funding_rate)
-    #
-    # negative_funding_rate = [rate for rate in funding_rates if
-    #                          0.005 != rate < 0.01]  # отрицательные должны быть меньше 0.01%, но не равны 0.005%
-    # negative_funding_rate_quantity = len(negative_funding_rate)
-    #
-    # neutral_funding_rate = [rate for rate in funding_rates if
-    #                         rate == 0.01 or rate == 0.05]  # нейтральные равны либо 0.01%, либо 0.005%
-    # neutral_funding_rate_quantity = len(neutral_funding_rate)
+                writer.writerow(record.values())
 
-    # user_id = token_data.get("user_id")
-    # csv_file_path = f"dataframes/funding_data_{user_id}.csv"
-    # df.to_csv(csv_file_path, index=False)
+        await database.execute(
+            """
+            INSERT INTO data_history.funding_data_history (user_id, created, positive_count, negative_count, neutral_count)
+            VALUES ($1, $2, $3, $4, $5);
+            """, user_id, datetime.now(), positive_funding_rate_quantity, negative_funding_rate_quantity, neutral_funding_rate_quantity
+        )
 
-    # await database.execute(
-    #     """
-    #     INSERT INTO data_history.funding_data_history (user_id, created, positive_count, negative_count, neutral_count)
-    #     VALUES ($1, $2, $3, $4, $5);
-    #     """, user_id, datetime.now(), positive_funding_rate_quantity, negative_funding_rate_quantity, neutral_funding_rate_quantity
-    # )
-    #
-    # return {"status": "success",
-    #         "positive_quantity": positive_funding_rate_quantity,
-    #         "negative_quantity": negative_funding_rate_quantity,
-    #         "neutral_quantity": neutral_funding_rate_quantity,
-    #         "positive_rate": positive_funding_rate,
-    #         "negative_rate": negative_funding_rate,
-    #         "neutral_rate": neutral_funding_rate
-    #         }
-    return {'status': 'ok'}
+        return {"status": "success",
+                "positive_quantity": positive_funding_rate_quantity,
+                "negative_quantity": negative_funding_rate_quantity,
+                "neutral_quantity": neutral_funding_rate_quantity,
+                "graph_data": return_value
+                }
+
+    return {"status": False}
