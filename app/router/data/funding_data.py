@@ -31,7 +31,7 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
         funding_data = funding_response.json()
 
         for record in funding_data:
-            stock_id = database.fetchrow(
+            stock_id = await database.fetchrow(
                 """
                 SELECT stock_id
                 FROM data_history.funding
