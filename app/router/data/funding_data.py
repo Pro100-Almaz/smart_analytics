@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 import psycopg2
+import requests
 
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 
@@ -18,50 +19,57 @@ router = APIRouter()
 
 @router.get("/funding_data", tags=["data"])
 async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBearer())):
-    if interval == 1:
-        time_gap = 60
-    elif interval == 7:
-        time_gap = 480
-    else:
-        time_gap = 1440
+    funding_response = requests.get("https://fapi.binance.com/fapi/v1/fundingRate")
+    if funding_response.status_code == 200:
+        if interval == 1:
+            time_gap = 60
+        elif interval == 7:
+            time_gap = 480
+        else:
+            time_gap = 1440
 
-    sql_query = f"""
-        WITH NumberedData AS (
-            SELECT
-                *,
-                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY funding_time) AS rn
-            FROM
-                data_history.funding_data
-        ),
-        IntervalData AS (
-            SELECT
-                stock_id,
-                funding_time,
-                funding_rate,
-                mark_price,
-                ROW_NUMBER() OVER (PARTITION BY stock_id ORDER BY rn) AS interval_position
-            FROM
-                NumberedData
-            WHERE
-                rn % {time_gap} = 0 
-        )
-        SELECT
-            interval_position,
-            array_agg(stock_id ORDER BY stock_id) AS stock_ids,
-            array_agg(funding_time ORDER BY stock_id) AS funding_times,
-            array_agg(funding_rate ORDER BY stock_id) AS funding_rates,
-            array_agg(mark_price ORDER BY stock_id) AS mark_prices
-        FROM
-            IntervalData
-        GROUP BY
-            interval_position
-        ORDER BY
-            interval_position;
-        """
+        funding_data = funding_response.json()
 
-    conn = psycopg2.connect(os.getenv('DATABASE_URL'))
-    df = pd.read_sql_query(sql_query, con=conn)
-    conn.close()
+        for record in funding_data:
+            stock_id = database.fetchrow(
+                """
+                SELECT stock_id
+                FROM data_history.funding
+                WHERE symbol = $1;
+                """, record["symbol"]
+            )
+
+            stock_id = stock_id[0][0]
+
+            stock_data = await database.fetch(
+                """
+                WITH FilteredData AS (
+                    SELECT
+                        *,
+                        ROW_NUMBER() OVER (ORDER BY funding_time) AS rn
+                    FROM
+                        data_history.funding_data
+                    WHERE
+                        stock_id = $1
+                )
+                SELECT
+                    *
+                FROM
+                    FilteredData
+                WHERE
+                    rn % $2 = 0  
+                ORDER BY
+                    funding_time;
+                """, stock_id, time_gap
+            )
+
+            for data in stock_data:
+                print(data)
+
+
+    # conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+    # df = pd.read_sql_query(sql_query, con=conn)
+    # conn.close()
 
     # funding_rates = df['funding_rate'].astype(float).tolist()
     #
@@ -76,9 +84,9 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
     #                         rate == 0.01 or rate == 0.05]  # нейтральные равны либо 0.01%, либо 0.005%
     # neutral_funding_rate_quantity = len(neutral_funding_rate)
 
-    user_id = token_data.get("user_id")
-    csv_file_path = f"dataframes/funding_data_{user_id}.csv"
-    df.to_csv(csv_file_path, index=False)
+    # user_id = token_data.get("user_id")
+    # csv_file_path = f"dataframes/funding_data_{user_id}.csv"
+    # df.to_csv(csv_file_path, index=False)
 
     # await database.execute(
     #     """
