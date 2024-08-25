@@ -4,6 +4,7 @@ import os
 import hmac
 import urllib.parse as urlparse
 from datetime import datetime
+from typing import Dict
 
 from dotenv import load_dotenv
 
@@ -12,7 +13,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from .schemas import Authorization
 from app.utils import create_access_token
 from app.database import database
-
+from ...auth_bearer import JWTBearer
 
 load_dotenv()
 router = APIRouter()
@@ -75,4 +76,17 @@ async def login_user(telegram_data: Authorization):
     token = create_access_token({"telegram_id": user_tg_data.get("id"), "username": user_tg_data.get("username"),
                                  "user_id": user_id})
 
-    return {"token": token, "user_id": user_id, "Status": "200", "username": user_tg_data.get("username")}
+    return {"token": token, "user_id": user_id, "Status": "success", "username": user_tg_data.get("username")}
+
+
+@router.post("/get_referral_link")
+async def login_user(token_data: Dict = Depends(JWTBearer())):
+    referral_link = await database.fetchrow(
+        """
+        SELECT referral_link
+        FROM users."user"
+        WHERE user_id = $1
+        """, token_data.get("user_id")
+    )
+
+    return {"status": "success", "link": referral_link.get("referral_link")}

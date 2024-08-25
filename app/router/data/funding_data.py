@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("/funding_data", tags=["data"])
-async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBearer())):
+async def get_funding_data(interval: int = Query(7), token_data: Dict = Depends(JWTBearer())):
     funding_response = requests.get("https://fapi.binance.com/fapi/v1/fundingRate")
     if funding_response.status_code == 200:
         user_id = token_data.get("user_id")
@@ -83,8 +83,6 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
                 """, stock_id, time_gap
             )
 
-            temp_list = []
-
             for data in stock_data:
                 if data.get("rn") not in return_value:
                     return_value[data.get("rn")] = {
@@ -103,7 +101,7 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
             with open(csv_file_path, mode='a', newline='') as file:
                 writer = csv.writer(file)
 
-                writer.writerow(record.values())
+                writer.writerow([record['symbol'], record['fundingTime'], float(record['fundingRate']) * 100, record['markPrice']])
 
         await database.execute(
             """
@@ -119,4 +117,17 @@ async def get_impulse(interval: int = Query(7), token_data: Dict = Depends(JWTBe
                 "graph_data": return_value
                 }
 
-    return {"status": False}
+    return {"status": "service_error"}
+
+
+@router.get("/funding_data_history", tags=["data"])
+async def get_funding_history(token_data: Dict = Depends(JWTBearer())):
+    data = await database.fetch(
+        """
+        SELECT created, positive_count, negative_count, neutral_count
+        FROM data_history.funding_data_history
+        WHERE user_id = $1
+        """, token_data.get("user_id")
+    )
+
+    return {"status": "success", "data": data}
