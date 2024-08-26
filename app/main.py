@@ -15,7 +15,7 @@ from app.router.data import router as data_router
 from app.router.main import router as main_router
 from .logger import logger
 
-app = FastAPI(title="My API", version="4.0", description="API description", openapi_version="3.0.2")
+app = FastAPI(app = FastAPI(docs_url=f"/url_root/docs_url", openapi_url="/url_root/openapi.json", redoc_url=None))
 
 
 app.add_middleware(
