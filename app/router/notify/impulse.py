@@ -28,17 +28,17 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
     return impulses
 
 
-@router.get("/get_impulse_history", tags=["notify"])
-async def get_impulse(token_data: Dict = Depends(JWTBearer())):
-    # impulses = await database.fetch(
-    #     """
-    #     SELECT *
-    #     FROM users.user_notification
-    #     WHERE user_id = $1 AND notification_type = 'last_impulse'
-    #     """, token_data.get("user_id")
-    # )
-
-    return {}
+# @router.get("/get_impulse_history", tags=["notify"])
+# async def get_impulse(token_data: Dict = Depends(JWTBearer())):
+#     impulses = await database.fetch(
+#         """
+#         SELECT *
+#         FROM users.notification
+#         WHERE
+#         """, token_data.get("user_id")
+#     )
+#
+#     return {}
 
 
 @router.post("/set_impulse", tags=["notify"])
@@ -82,15 +82,20 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
         try:
             await database.execute(
                 """
-                UPDATE users.user_notification
-                SET condition = $2, created = $3
-                WHERE id = (
+                DELETE FROM users.user_notification WHERE id = (
                     SELECT id
                     FROM users.user_notification
                     WHERE user_id = $1
                     ORDER BY created ASC
                     LIMIT 1
                 );
+                """
+            )
+
+            await database.execute(
+                """
+                INSERT INTO users.user_notification (user_id, notification_type, notify_time, condition, created) 
+                VALUES ($1, 'last_impulse', NULL, $2, $3)
                 """, token_data.get("user_id"), condition, datetime.now()
             )
         except Exception as e:
