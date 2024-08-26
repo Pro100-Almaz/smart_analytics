@@ -6,4 +6,5 @@ class Authorization(BaseModel):
 
 
 class Notification(BaseModel):
-    notifications: dict
+    last_impulse: bool
+    tracking_ticker: bool

@@ -35,8 +35,9 @@ def last_impulse_notification():
 
     users = database.execute_with_return(
         """
-            SELECT user_id, condition, id
-            FROM users.user_notification
+            SELECT un.user_id, condition, id
+            FROM users.user_notification un
+            JOIN users.notification_settings ns ON un.user_id = ns.user_id AND ns.last_impulse
             WHERE notification_type = 'last_impulse' AND active = true;
         """
     )

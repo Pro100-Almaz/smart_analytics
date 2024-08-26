@@ -95,6 +95,13 @@ async def webhook(update: Update):
                     """, user_id, True
                 )
 
+                await database.execute(
+                    """
+                    INSERT INTO users.notification_settings (user_id)
+                    VALUES ($1);
+                    """, user_id
+                )
+
                 return_text = i18n.get_string('bot.success_message', language_code).format(referred_id=telegram_id)
                 bot_return_text = (i18n.get_string('bot.invited_client_welcome_text', language_code).
                                    format(user_nickname=username))
@@ -143,6 +150,13 @@ async def webhook(update: Update):
                     INSERT INTO users.premium (user_id, status, last_payment, discout) 
                     VALUES ($1, $2, NULL, NULL)
                     """, user_id, True
+                )
+
+                await database.execute(
+                    """
+                    INSERT INTO users.notification_settings (user_id)
+                    VALUES ($1);
+                    """, user_id
                 )
 
                 bot_return_text = (i18n.get_string('bot.client_welcome_text', language_code).

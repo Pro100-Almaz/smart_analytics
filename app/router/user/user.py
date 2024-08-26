@@ -94,26 +94,26 @@ async def get_referral_link(token_data: Dict = Depends(JWTBearer())):
 
 @router.get("/get_notifications")
 async def get_notification(token_data: Dict = Depends(JWTBearer())):
-    referral_link = await database.fetchrow(
+    notifications = await database.fetchrow(
         """
-        SELECT notification_type, active
-        FROM users.user_notification
+        SELECT *
+        FROM users.notification_settings
         WHERE user_id = $1
         """, token_data.get("user_id")
     )
 
-    return {"status": "success", "link": referral_link.get("referral_link")}
+    return {"status": "success", "notifications": notifications}
 
 
-# @router.post("/set_notifications")
-# async def set_up_notifications(notifications: Notification, token_data: Dict = Depends(JWTBearer())):
-#     referral_link = await database.fetchrow(
-#         """
-#         SELECT referral_link
-#         FROM users."user"
-#         WHERE user_id = $1
-#         """, token_data.get("user_id")
-#     )
-#
-#     return {"status": "success", "link": referral_link.get("referral_link")}
+@router.post("/set_notifications")
+async def set_up_notifications(notifications: Notification, token_data: Dict = Depends(JWTBearer())):
+    await database.execute(
+        """
+        UPDATE users.notification_settings
+        SET last_impulse = $2, tracking_ticker = $3
+        WHERE user_id = $1
+        """, token_data.get("user_id"), notifications.last_impulse, notifications.tracking_ticker
+    )
+
+    return {"status": "success"}
 
