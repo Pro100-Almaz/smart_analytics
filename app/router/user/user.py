@@ -93,28 +93,27 @@ async def get_referral_link(token_data: Dict = Depends(JWTBearer())):
 
 
 @router.get("/get_notifications")
-async def get_referral_link(token_data: Dict = Depends(JWTBearer())):
+async def get_notification(token_data: Dict = Depends(JWTBearer())):
     referral_link = await database.fetchrow(
         """
         SELECT notification_type, active
         FROM users.user_notification
         WHERE user_id = $1
-        GROUP BY notification_type
         """, token_data.get("user_id")
     )
 
     return {"status": "success", "link": referral_link.get("referral_link")}
 
 
-@router.post("/set_notifications")
-async def set_up_notifications(notifications: Notification, token_data: Dict = Depends(JWTBearer())):
-    referral_link = await database.fetchrow(
-        """
-        SELECT referral_link
-        FROM users."user"
-        WHERE user_id = $1
-        """, token_data.get("user_id")
-    )
-
-    return {"status": "success", "link": referral_link.get("referral_link")}
+# @router.post("/set_notifications")
+# async def set_up_notifications(notifications: Notification, token_data: Dict = Depends(JWTBearer())):
+#     referral_link = await database.fetchrow(
+#         """
+#         SELECT referral_link
+#         FROM users."user"
+#         WHERE user_id = $1
+#         """, token_data.get("user_id")
+#     )
+#
+#     return {"status": "success", "link": referral_link.get("referral_link")}
 
