@@ -247,8 +247,8 @@ def get_funding_data():
                 return "Error with DB"
 
             stock_id = stock_id[0][0]
-            funding_rate = Decimal(record["lastFundingRate"] * 100).quantize(Decimal('.000000001'), rounding=ROUND_DOWN)
-            market_price = Decimal(record["markPrice"]).quantize(Decimal('.00000001'), rounding=ROUND_DOWN)
+            funding_rate = Decimal(float(record["lastFundingRate"]) * 100).quantize(Decimal('.000000001'), rounding=ROUND_DOWN)
+            market_price = Decimal(float(record["markPrice"])).quantize(Decimal('.00000001'), rounding=ROUND_DOWN)
 
             seconds = record["time"] / 1000.0
             time_value = datetime.datetime.fromtimestamp(seconds, tz=datetime.timezone.utc)
