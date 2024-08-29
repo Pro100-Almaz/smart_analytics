@@ -18,16 +18,22 @@ load_dotenv()
 router = APIRouter()
 
 
-
-
 @router.get("/ticker_information")
-async def get_funding_history(token_data: Dict = Depends(JWTBearer())):
-    data = await database.fetch(
+async def get_funding_history(ticker: str = Query(max_length=50), token_data: Dict = Depends(JWTBearer())):
+    if not ticker:
+        return {"status": "fail", "message": "No ticker provided"}
+
+    ticker_exists = await database.fetchrow(
         """
-        SELECT created, positive_count, negative_count, neutral_count
-        FROM data_history.funding_data_history
-        WHERE user_id = $1
-        """, token_data.get("user_id")
+        SELECT *
+        FROM data_history.funding
+        WHERE symbol = $1;
+        """, ticker
     )
+
+    if not ticker_exists:
+        return {"status": "fail", "message": "No such ticker"}
+
+
 
     return {"status": "success", "data": data}
