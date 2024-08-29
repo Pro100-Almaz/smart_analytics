@@ -98,7 +98,7 @@ async def get_gradation(interval: int = Query(30), growth_type: str = Query("Vol
             """, user_id, current_date, current_time, file_name, "volume" if growth_type == "Volume" else "price"
         )
 
-        return {"status": "success", "file_name": f"volume_growth_{interval}.csv", "file_id": file_id}
+        return {"status": "success", "file_name": f"volume_growth_{interval}.csv", "file_id": file_id[0][0]}
 
     return {"status": "service_error"}
 
