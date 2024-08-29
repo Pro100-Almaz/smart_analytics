@@ -46,6 +46,33 @@ def get_volume_data():
 
             first_5 = sorted_data_volume[-5:]
 
+            for record in first_5:
+                stock_id = database.execute_with_return(
+                    """
+                        SELECT stock_id
+                        FROM data_history.funding
+                        WHERE symbol = %s 
+                    """, (record['symbol'],),
+                )
+
+                if not stock_id:
+                    continue
+
+                stock_id = stock_id[0][0]
+
+                quote_volume_5m = database.execute_with_return(
+                    """
+                    SELECT quote_volume
+                    FROM data_history.volume_data
+                    WHERE stock_id = %s
+                    ORDER BY open_time DESC
+                    LIMIT 1 OFFSET 4;
+                    """, (stock_id,)
+                )
+
+                record['5_min_value'] = quote_volume_5m[0][0]
+
+
             redis_data = {
                 'last_update_time': rounded_time.isoformat(),
                 'first_5': first_5,
@@ -121,13 +148,13 @@ def get_volume_data():
 
 
 def get_funding_data():
-    funding_response = requests.get("https://fapi.binance.com/fapi/v1/fundingRate")
+    funding_response = requests.get("https://fapi.binance.com/fapi/v1/premiumIndex")
     if funding_response.status_code == 200:
         database.connect()
 
         funding_data = funding_response.json() if funding_response.status_code == 200 else None
 
-        sorted_data_funding = sorted(funding_data, key=lambda x: float(x['fundingRate']))
+        sorted_data_funding = sorted(funding_data, key=lambda x: float(x['lastFundingRate']))
         now = datetime.datetime.now()
 
         try:
@@ -135,6 +162,58 @@ def get_funding_data():
 
             last_5 = sorted_data_funding[0:5]
             first_5 = sorted_data_funding[-5:]
+
+            for record in first_5:
+                stock_id = database.execute_with_return(
+                    """
+                        SELECT stock_id
+                        FROM data_history.funding
+                        WHERE symbol = %s 
+                    """, (record['symbol'],),
+                )
+
+                if not stock_id:
+                    continue
+
+                stock_id = stock_id[0][0]
+
+                quote_volume_5m = database.execute_with_return(
+                    """
+                    SELECT quote_volume
+                    FROM data_history.volume_data
+                    WHERE stock_id = %s
+                    ORDER BY open_time DESC
+                    LIMIT 1 OFFSET 4;
+                    """, (stock_id,)
+                )
+
+                record['5_min_value'] = quote_volume_5m[0][0]
+
+            for record in last_5:
+                stock_id = database.execute_with_return(
+                    """
+                        SELECT stock_id
+                        FROM data_history.funding
+                        WHERE symbol = %s 
+                    """, (record['symbol'],),
+                )
+
+                if not stock_id:
+                    continue
+
+                stock_id = stock_id[0][0]
+
+                quote_volume_5m = database.execute_with_return(
+                    """
+                    SELECT quote_volume
+                    FROM data_history.volume_data
+                    WHERE stock_id = %s
+                    ORDER BY open_time DESC
+                    LIMIT 1 OFFSET 4;
+                    """, (stock_id,)
+                )
+
+                record['5_min_value'] = quote_volume_5m[0][0]
 
             redis_data = {
                 'last_update_time': rounded_time.isoformat(),
@@ -168,7 +247,7 @@ def get_funding_data():
                 return "Error with DB"
 
             stock_id = stock_id[0][0]
-            funding_rate = Decimal(record["fundingRate"]).quantize(Decimal('.00000000001'), rounding=ROUND_DOWN)
+            funding_rate = Decimal(record["lastFundingRate"] * 100).quantize(Decimal('.000000001'), rounding=ROUND_DOWN)
             market_price = Decimal(record["markPrice"]).quantize(Decimal('.00000001'), rounding=ROUND_DOWN)
 
             seconds = record["fundingTime"] / 1000.0
