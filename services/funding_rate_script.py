@@ -70,7 +70,7 @@ def get_volume_data():
                     """, (stock_id,)
                 )
 
-                record['5_min_value'] = quote_volume_5m[0][0]
+                record['5_min_value'] = float(quote_volume_5m[0][0])
 
 
             redis_data = {
@@ -187,7 +187,7 @@ def get_funding_data():
                     """, (stock_id,)
                 )
 
-                record['5_min_value'] = quote_volume_5m[0][0]
+                record['5_min_value'] = float(quote_volume_5m[0][0])
 
             for record in last_5:
                 stock_id = database.execute_with_return(
@@ -213,7 +213,7 @@ def get_funding_data():
                     """, (stock_id,)
                 )
 
-                record['5_min_value'] = quote_volume_5m[0][0]
+                record['5_min_value'] = float(quote_volume_5m[0][0])
 
             redis_data = {
                 'last_update_time': rounded_time.isoformat(),
@@ -287,8 +287,8 @@ def get_funding_data():
         database.disconnect()
 
 
-schedule.every(60).seconds.do(get_funding_data)
-schedule.every(60).seconds.do(get_volume_data)
+schedule.every(3).seconds.do(get_funding_data)
+schedule.every(3).seconds.do(get_volume_data)
 
 while True:
     schedule.run_pending()
