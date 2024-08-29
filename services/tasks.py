@@ -81,10 +81,12 @@ def push_stock_data(stock_symbol, new_data: float):
             sliding_window = current_data.get("values")
             sliding_window.append(new_data)
 
-            min_value = min(sliding_window)
-            max_value = max(sliding_window)
+            min_value = min(sliding_window[:-1])
+            max_value = max(sliding_window[:-1])
 
-            current_data["diff"] = [min_value - max_value, round((min_value - max_value) / abs(min_value) * 100, 3)]
+            current_data["diff"] = [round((min_value - new_data) / abs(new_data) * 100, 3),
+                                    round((max_value - new_data) / abs(new_data) * 100, 3)
+                                    ]
             current_data["min"] = min_value
             current_data["max"] = max_value
 
@@ -120,47 +122,10 @@ def update_stock_data(stock_symbol, new_data: float):
             sliding_window = current_data.get("values")
             sliding_window[-1] = new_data
 
-            min_value = min(sliding_window)
-            max_value = max(sliding_window)
-
-            current_data["diff"] = [min_value - max_value, round((min_value - max_value) / abs(min_value) * 100, 3)]
-            current_data["min"] = min_value
-            current_data["max"] = max_value
+            current_data["diff"] = [round((current_data["min"] - new_data) / abs(new_data) * 100, 3),
+                                    round((current_data["max"] - new_data) / abs(new_data) * 100, 3)
+                                    ]
 
     redis_client.set(stock_key, pickle.dumps(shared_dict))
     redis_client.expire(stock_key, 3600)
     return "success"
-
-
-# @app.task
-# def notify_by_telegram(active_name, percent, telegram_id):
-#     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-#
-#     payload = {
-#         "chat_id": telegram_id,
-#         "text": "\n".join(["🔔❗️Обратите внимание❗️🔔",
-#                            f"Торговая пара {active_name} дала импульс цены в {percent}% 🔴📈"])
-#     }
-#
-#     # if user_id == 123:
-#     #     reply_markup = {
-#     #         "inline_keyboard": [[{
-#     #             "text": "Lets trade!",
-#     #             "web_app": {"url": "https://smart-trade-kappa.vercel.app/"}
-#     #         }]]
-#     #     }
-#     #
-#     #     payload["reply_markup"] = reply_markup
-#
-#     response = requests.post(url, json=payload)
-#     print(response)
-#
-#     database.execute(
-#         """
-#             INSERT INTO users.notification (type, date, text, status)
-#             VALUES (%s, current_timestamp, %s, %s);
-#         """, (1, response.text, response.status_code)
-#     )
-#     return response
-
-

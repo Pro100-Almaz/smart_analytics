@@ -250,7 +250,7 @@ def get_funding_data():
             funding_rate = Decimal(record["lastFundingRate"] * 100).quantize(Decimal('.000000001'), rounding=ROUND_DOWN)
             market_price = Decimal(record["markPrice"]).quantize(Decimal('.00000001'), rounding=ROUND_DOWN)
 
-            seconds = record["fundingTime"] / 1000.0
+            seconds = record["time"] / 1000.0
             time_value = datetime.datetime.fromtimestamp(seconds, tz=datetime.timezone.utc)
 
             try:
