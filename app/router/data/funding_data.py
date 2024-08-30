@@ -20,7 +20,7 @@ router = APIRouter()
 
 @router.get("/funding_data", tags=["data"])
 async def get_funding_data(interval: int = Query(7), token_data: Dict = Depends(JWTBearer())):
-    funding_response = requests.get("https://fapi.binance.com/fapi/v1/fundingRate")
+    funding_response = requests.get("https://fapi.binance.com/fapi/v1/premiumIndex")
     if funding_response.status_code == 200:
         user_id = token_data.get("user_id")
         csv_file_path = f"dataframes/funding_data_{user_id}.csv"
@@ -29,7 +29,12 @@ async def get_funding_data(interval: int = Query(7), token_data: Dict = Depends(
             writer = csv.writer(file)
             writer.writerow(["symbol", "fundingTime", "fundingRate", "markPrice"])
 
-        return_value = {}
+        return_value = {
+            'time_interval': [0],
+            'positive': [0],
+            'negative': [0],
+            'neutral': [0]
+        }
         positive_funding_rate_quantity = 0
         negative_funding_rate_quantity = 0
         neutral_funding_rate_quantity = 0
@@ -44,12 +49,15 @@ async def get_funding_data(interval: int = Query(7), token_data: Dict = Depends(
         funding_data = funding_response.json()
 
         for record in funding_data:
-            if float(record['fundingRate']) > 0.01:
+            if float(record['lastFundingRate']) > 0.01:
                 positive_funding_rate_quantity += 1
-            elif float(record['fundingRate']) != 0.005 and float(record['fundingRate']) < 0.01:
+                return_value['positive'][0] += 1
+            elif float(record['lastFundingRate']) != 0.005 and float(record['lastFundingRate']) < 0.01:
                 negative_funding_rate_quantity += 1
-            elif float(record['fundingRate']) == 0.01 or float(record['fundingRate']) == 0.05:
+                return_value['negative'][0] += 1
+            elif float(record['lastFundingRate']) == 0.01 or float(record['lastFundingRate']) == 0.05:
                 neutral_funding_rate_quantity += 1
+                return_value['neutral'][0] += 1
 
             stock_id = await database.fetchrow(
                 """
@@ -84,24 +92,23 @@ async def get_funding_data(interval: int = Query(7), token_data: Dict = Depends(
             )
 
             for data in stock_data:
-                if data.get("rn") not in return_value:
-                    return_value[data.get("rn")] = {
-                        "positive": 0,
-                        "negative": 0,
-                        "neutral": 0
-                    }
+                if data.get("rn") not in return_value['time_interval']:
+                    return_value['time_interval'].append(data.get("rn"))
+                    return_value['positive'].append(0)
+                    return_value['negative'].append(0)
+                    return_value['neutral'].append(0)
 
-                if data.get("funding_rate") > 0.01:
-                    return_value[data.get("rn")]["positive"] += 1
-                if 0.005 != data.get("funding_rate") < 0.01:
-                    return_value[data.get("rn")]["negative"] += 1
-                if data.get("funding_rate") == 0.01 or data.get("funding_rate") == 0.05:
-                    return_value[data.get("rn")]["neutral"] += 1
+                if data.get('funding_rate') > 0.01:
+                    return_value['positive'][-1] += 1
+                if 0.005 != data.get('funding_rate') < 0.01:
+                    return_value['negative'] += 1
+                if data.get('funding_rate') == 0.01 or data.get('funding_rate') == 0.05:
+                    return_value['neutral'] += 1
 
             with open(csv_file_path, mode='a', newline='') as file:
                 writer = csv.writer(file)
 
-                writer.writerow([record['symbol'], record['fundingTime'], float(record['fundingRate']) * 100, record['markPrice']])
+                writer.writerow([record['symbol'], record['time'], float(record['lastFundingRate']) * 100, record['markPrice']])
 
         await database.execute(
             """

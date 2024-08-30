@@ -287,8 +287,8 @@ def get_funding_data():
         database.disconnect()
 
 
-schedule.every(3).seconds.do(get_funding_data)
-schedule.every(3).seconds.do(get_volume_data)
+schedule.every(60).seconds.do(get_funding_data)
+schedule.every(60).seconds.do(get_volume_data)
 
 while True:
     schedule.run_pending()

@@ -66,7 +66,6 @@ def push_stock_data(stock_symbol, new_data: float):
         }
     else:
         shared_dict = pickle.loads(redis_client.get(stock_key))
-
     for interval_type, current_data in shared_dict.items():
         if interval_type == "1_min":
             if current_data.get("value"):
@@ -81,12 +80,13 @@ def push_stock_data(stock_symbol, new_data: float):
             sliding_window = current_data.get("values")
             sliding_window.append(new_data)
 
-            min_value = min(sliding_window[:-1])
-            max_value = max(sliding_window[:-1])
-
-            current_data["diff"] = [round((min_value - new_data) / abs(new_data) * 100, 3),
-                                    round((max_value - new_data) / abs(new_data) * 100, 3)
+            current_data["diff"] = [round((current_data.get("min", 0) - new_data) / abs(new_data) * 100, 3),
+                                    round((current_data.get("max", 0) - new_data) / abs(new_data) * 100, 3)
                                     ]
+
+
+            min_value = min(sliding_window)
+            max_value = max(sliding_window)
             current_data["min"] = min_value
             current_data["max"] = max_value
 
@@ -102,13 +102,10 @@ def push_stock_data(stock_symbol, new_data: float):
             break
 
 
-@app.task
+@shared_task
 def update_stock_data(stock_symbol, new_data: float):
     stock_key = f"{SHARED_DICT_KEY}:{stock_symbol}"
-    try:
-        shared_dict = pickle.loads(redis_client.get(stock_key))
-    except:
-        return "create_stock_key"
+    shared_dict = pickle.loads(redis_client.get(stock_key))
 
     for interval_type, current_data in shared_dict.items():
         if interval_type == "1_min":
@@ -122,10 +119,14 @@ def update_stock_data(stock_symbol, new_data: float):
             sliding_window = current_data.get("values")
             sliding_window[-1] = new_data
 
-            current_data["diff"] = [round((current_data["min"] - new_data) / abs(new_data) * 100, 3),
-                                    round((current_data["max"] - new_data) / abs(new_data) * 100, 3)
+            current_data["diff"] = [round((current_data.get("min", 0) - new_data) / abs(new_data) * 100, 3),
+                                    round((current_data.get("max", 0) - new_data) / abs(new_data) * 100, 3)
                                     ]
+
+            min_value = min(sliding_window)
+            max_value = max(sliding_window)
+            current_data["min"] = min_value
+            current_data["max"] = max_value
 
     redis_client.set(stock_key, pickle.dumps(shared_dict))
     redis_client.expire(stock_key, 3600)
-    return "success"

@@ -50,7 +50,10 @@ def last_impulse_notification():
             data_intervals = dict(data_intervals)
             temp_data = data_intervals.get(user_interval, None)
 
-            if temp_data and abs(temp_data.get('diff', {})[1]) >= user_percent:
+            min_diff = temp_data.get('diff', {})[0] if abs(min_diff) >= user_percent else False
+            max_diff = temp_data.get('diff', {})[0] if abs(max_diff) >= user_percent else False
+
+            if temp_data and (min_diff or max_diff):
                 telegram_id = database.execute_with_return(
                     """
                         SELECT telegram_id
@@ -81,23 +84,52 @@ def last_impulse_notification():
                 if is_it_sent:
                     continue
 
-                percent = temp_data.get('diff', {})[1]
+                percent = max_diff if max_diff != False else min_diff
 
                 url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
+                if user_interval == "1_min":
+                    time_text = "(за последние 1 мин)"
+                elif user_interval == "5_min":
+                    time_text = "(за последние 5 мин)"
+                elif user_interval == "15_min":
+                    time_text = "(за последние 15 мин)"
+                else:
+                    time_text = "(за последние 60 мин)"
+
+                if percent > 0:
+                    text_for_notification = "\n".join(["🔔❗️Обратите внимание❗️🔔",
+                                            f"Торговая пара {active_name} дала импульс цены в {percent}% {time_text} 🟢📈"])
+                else:
+                    text_for_notification = "\n".join(["🔔❗️Обратите внимание❗️🔔",
+                                            f"Торговая пара {active_name} дала импульс цены в {percent}% {time_text} 🔴📉"])
+
                 payload = {
                     "chat_id": telegram_id,
-                    "text": "\n".join(["🔔❗️Обратите внимание❗️🔔",
-                                       f"Торговая пара {active_name} дала импульс цены в {percent}% 🔴📈"])
+                    "text": text_for_notification
                 }
 
                 response = requests.post(url, json=payload)
 
+                day_before_price = database.execute_with_return(
+                    """
+                    SELECT close_price
+                    FROM data_history.funding t1
+                    JOIN data_history.kline_1 t2 ON t1.stock_id = t2.stock_id
+                    WHERE t1.symbol = %s
+                    ORDER BY t2.open_time DESC 
+                    LIMIT 1 OFFSET 1439;
+                    """, (active_name,)
+                )
+
+                current_price = temp_data.get('values', [])[-1]
+                day_percent = round((current_price - day_before_price[0][0]) / day_before_price[0][0]) * 100, 2))
+
                 database.execute(
                     """
-                        INSERT INTO users.notification (type, date, text, status, active_name, telegram_id)
+                        INSERT INTO users.notification (type, date, text, status, active_name, telegram_id, percent, day_percent)
                         VALUES (%s, current_timestamp, %s, %s, %s, %s);
-                    """, (user[2], response.text, response.ok, active_name, telegram_id)
+                    """, (user[2], response.text, response.ok, active_name, telegram_id, percent, day_percent)
                 )
 
                 return f"send_notify to user: {user[0]}"
