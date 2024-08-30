@@ -162,6 +162,7 @@ def get_funding_data():
 
             last_5 = sorted_data_funding[0:5]
             first_5 = sorted_data_funding[-5:]
+            print("Check point 1!")
 
             for record in first_5:
                 stock_id = database.execute_with_return(
@@ -189,6 +190,8 @@ def get_funding_data():
 
                 record['5_min_value'] = float(quote_volume_5m[0][0])
 
+            print("Check point 2!")
+
             for record in last_5:
                 stock_id = database.execute_with_return(
                     """
@@ -215,13 +218,20 @@ def get_funding_data():
 
                 record['5_min_value'] = float(quote_volume_5m[0][0])
 
+            print("Check point 3!")
+
             redis_data = {
                 'last_update_time': rounded_time.isoformat(),
                 'first_5': first_5,
                 'last_5': last_5,
             }
 
+            print("Check point 4!")
+
+
             json_data = json.dumps(redis_data)
+            print("Check point 5!")
+
             redis_database.set('funding:top:5:tickets', json_data)
         except Exception as e:
             logging.error(f"Error arose while trying to insert top tickets into Reddis, error message:{e}")
