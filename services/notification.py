@@ -123,7 +123,7 @@ def last_impulse_notification():
                 )
 
                 current_price = temp_data.get('values', [])[-1]
-                day_percent = round((current_price - day_before_price[0][0]) / day_before_price[0][0]) * 100, 2))
+                day_percent = round(((current_price - day_before_price[0][0]) / day_before_price[0][0]) * 100, 2)
 
                 database.execute(
                     """
