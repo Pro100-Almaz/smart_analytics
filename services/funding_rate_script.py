@@ -188,7 +188,8 @@ def get_funding_data():
                     """, (stock_id,)
                 )
 
-                record['5_min_value'] = float(quote_volume_5m[0][0])
+                if quote_volume_5m:
+                    record['5_min_value'] = float(quote_volume_5m[0][0])
 
             print("Check point 2!")
 
@@ -211,12 +212,13 @@ def get_funding_data():
                     SELECT quote_volume
                     FROM data_history.volume_data
                     WHERE stock_id = %s
-                    ORDER BY open_time DESC
+                    ORDER BY open_time
                     LIMIT 1 OFFSET 4;
                     """, (stock_id,)
                 )
 
-                record['5_min_value'] = float(quote_volume_5m[0][0])
+                if quote_volume_5m:
+                    record['5_min_value'] = float(quote_volume_5m[0][0])
 
             print("Check point 3!")
 
@@ -298,7 +300,7 @@ def get_funding_data():
 
 
 schedule.every(60).seconds.do(get_funding_data)
-schedule.every(60).seconds.do(get_volume_data)
+# schedule.every(60).seconds.do(get_volume_data)
 
 while True:
     schedule.run_pending()
