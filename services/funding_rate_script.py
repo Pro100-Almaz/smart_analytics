@@ -5,6 +5,7 @@ import requests
 import datetime
 import os
 import time
+import statistics
 
 import schedule
 import logging
@@ -32,10 +33,33 @@ except_list = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "BTCDOMUSDT"]
 
 
 def get_volume_data():
-    volume_response = requests.get('https://fapi.binance.com/fapi/v1/ticker/24hr')
-    if volume_response.status_code == 200:
+    main_data = requests.get('https://fapi.binance.com/fapi/v1/ticker/24hr')
+
+    if main_data.status_code == 200:
         database.connect()
-        volume_data = volume_response.json() if volume_response.status_code == 200 else None
+
+        main_data = main_data.json()
+        for ticker in main_data:
+            if 'closeTime' in ticker and ticker['closeTime'] is not None:
+                try:
+                    ticker['openPositionDay'] = datetime.datetime.fromtimestamp(ticker['closeTime'] / 1000).strftime(
+                        '%d-%m-%Y')
+                except (ValueError, TypeError) as e:
+                    print(f"Error processing closeTime: {e}")
+                    ticker['openPositionDay'] = None
+            else:
+                print("closeTime not found or invalid in ticker")
+                ticker['openPositionDay'] = None
+
+        current_date = statistics.mode([ticker['openPositionDay'] for ticker in main_data])
+        not_usdt_symbols = [ticker['symbol'] for ticker in main_data if 'USDT' not in ticker['symbol']]
+        delete_symbols = [ticker['symbol'] for ticker in main_data if ticker['openPositionDay'] != current_date]
+
+        exchange_info_data = requests.get('https://fapi.binance.com/fapi/v1/exchangeInfo').json()['symbols']
+        not_perpetual_symbols = [info['symbol'] for info in exchange_info_data if info['contractType'] != 'PERPETUAL']
+        full_symbol_list_to_delete = set(not_usdt_symbols + delete_symbols + not_perpetual_symbols)
+        volume_data = [ticker for ticker in main_data if ticker['symbol'] not in full_symbol_list_to_delete]
+
         updated_volume_data = [d for d in volume_data if d['symbol'] not in except_list]
 
         sorted_data_volume = sorted(updated_volume_data, key=lambda x: float(x['quoteVolume']))
@@ -70,12 +94,13 @@ def get_volume_data():
                     """, (stock_id,)
                 )
 
-                record['5_min_value'] = float(quote_volume_5m[0][0])
+                if quote_volume_5m:
+                    record['5_min_value'] = float(quote_volume_5m[0][0])
 
 
             redis_data = {
                 'last_update_time': rounded_time.isoformat(),
-                'first_5': first_5,
+                'first_5': first_5
             }
 
             json_data = json.dumps(redis_data)
@@ -83,7 +108,7 @@ def get_volume_data():
         except Exception as e:
             logging.error(f"Error arose while trying to insert top tickets by volume into Reddis, error message:{e}")
 
-        for record in volume_data:
+        for record in updated_volume_data:
             try:
                 stock_id = database.execute_with_return(
                     """
@@ -147,10 +172,26 @@ def get_volume_data():
         database.disconnect()
 
 
+def get_symbols():
+    main_data = requests.get('https://fapi.binance.com/fapi/v1/ticker/24hr').json()
+    for ticker in main_data:
+        ticker['openPositionDay'] = datetime.fromtimestamp(ticker['closeTime'] / 1000).strftime('%d-%m-%Y')
+    current_date = statistics.mode([ticker['openPositionDay'] for ticker in main_data])
+    not_usdt_symbols = [ticker['symbol'] for ticker in main_data if 'USDT' not in ticker['symbol']]
+    delete_symbols = [ticker['symbol'] for ticker in main_data if ticker['openPositionDay'] != current_date]
+    exchange_info_data = requests.get('https://fapi.binance.com/fapi/v1/exchangeInfo').json()['symbols']
+    not_perpetual_symbols = [info['symbol'] for info in exchange_info_data if info['contractType'] != 'PERPETUAL']
+    full_symbol_list_to_delete = set(not_usdt_symbols + delete_symbols + not_perpetual_symbols)
+    main_data = [ticker for ticker in main_data if ticker['symbol'] not in full_symbol_list_to_delete]
+    ticker_list = sorted([ticker['symbol'] for ticker in main_data])
+    return ticker_list
+
+
 def get_funding_data():
     funding_response = requests.get("https://fapi.binance.com/fapi/v1/premiumIndex")
     if funding_response.status_code == 200:
         database.connect()
+        tickers = get_symbols()
 
         funding_data = funding_response.json() if funding_response.status_code == 200 else None
 
