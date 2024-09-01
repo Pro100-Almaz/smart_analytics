@@ -13,21 +13,21 @@ from logging.handlers import RotatingFileHandler
 
 from database import database, redis_database
 
-#
-# log_directory = "logs"
-# log_filename = "funding_rate.log"
-# log_file_path = os.path.join(log_directory, log_filename)
-#
-# if not os.path.exists(log_directory):
-#     os.makedirs(log_directory)
-#
-# logger = logging.getLogger(__name__)
-# logger.setLevel(logging.WARNING)
-#
-# handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
-# formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-# handler.setFormatter(formatter)
-# logger.addHandler(handler)
+
+log_directory = "logs"
+log_filename = "funding_rate.log"
+log_file_path = os.path.join(log_directory, log_filename)
+
+if not os.path.exists(log_directory):
+    os.makedirs(log_directory)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
+
+handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 except_list = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "BTCDOMUSDT"]
 
@@ -348,7 +348,7 @@ def get_funding_data():
 
 
 schedule.every(60).seconds.do(get_funding_data)
-# schedule.every(60).seconds.do(get_volume_data)
+schedule.every(60).seconds.do(get_volume_data)
 
 while True:
     schedule.run_pending()
