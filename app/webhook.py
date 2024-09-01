@@ -196,7 +196,7 @@ async def get_funding_data_file(token_data: Dict = Depends(JWTBearer())):
 
     csv_file_path = f"dataframes/funding_data_{user_id}.csv"
     with open(csv_file_path, 'rb') as file:
-        await bot.send_document(chat_id=telegram_id, document=file)
+        await bot.send_document(chat_id=telegram_id, document=file, filename="funding_data.csv")
 
     return {"Status": "ok"}
 
@@ -224,7 +224,7 @@ async def download_growth(file_id: int = Query(), token_data: Dict = Depends(JWT
     telegram_id = token_data["telegram_id"]
 
     with open(csv_file_path, 'rb') as file:
-        await bot.send_document(chat_id=telegram_id, document=file)
+        await bot.send_document(chat_id=telegram_id, document=file, filename="growth_data.csv")
 
     return {"Status": "ok"}
 
