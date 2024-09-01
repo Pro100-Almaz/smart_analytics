@@ -28,7 +28,7 @@ class Update(BaseModel):
     message: dict
 
 
-@router.post(f"")
+@router.post("", tags=["telegram_bot"])
 async def webhook(update: Update):
     if not update.message.get("text", None):
         return {"Status": "ok"}
@@ -189,7 +189,7 @@ async def webhook(update: Update):
     return {"Status": "ok"}
 
 
-@router.get("/send_funding_data", tags=["data"])
+@router.get("/send_funding_data", tags=["telegram_bot"])
 async def get_funding_data_file(token_data: Dict = Depends(JWTBearer())):
     user_id = token_data["user_id"]
     telegram_id = token_data["telegram_id"]
@@ -201,7 +201,7 @@ async def get_funding_data_file(token_data: Dict = Depends(JWTBearer())):
     return {"Status": "ok"}
 
 
-@router.get("/send_growth_data", tags=["default"])
+@router.get("/send_growth_data", tags=["telegram_bot"])
 async def download_growth(file_id: int = Query(), token_data: Dict = Depends(JWTBearer())):
     if not file_id:
         return {"Provide file id!"}
