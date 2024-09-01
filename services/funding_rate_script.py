@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import requests
 import datetime
+from datetime import datetime
 import os
 import time
 import statistics
@@ -42,7 +43,7 @@ def get_volume_data():
         for ticker in main_data:
             if 'closeTime' in ticker and ticker['closeTime'] is not None:
                 try:
-                    ticker['openPositionDay'] = datetime.datetime.fromtimestamp(ticker['closeTime'] / 1000).strftime(
+                    ticker['openPositionDay'] = datetime.fromtimestamp(ticker['closeTime'] / 1000).strftime(
                         '%d-%m-%Y')
                 except (ValueError, TypeError) as e:
                     print(f"Error processing closeTime: {e}")
@@ -174,8 +175,19 @@ def get_volume_data():
 
 def get_symbols():
     main_data = requests.get('https://fapi.binance.com/fapi/v1/ticker/24hr').json()
+
     for ticker in main_data:
-        ticker['openPositionDay'] = datetime.fromtimestamp(ticker['closeTime'] / 1000).strftime('%d-%m-%Y')
+        if 'closeTime' in ticker and ticker['closeTime'] is not None:
+            try:
+                ticker['openPositionDay'] = datetime.fromtimestamp(ticker['closeTime'] / 1000).strftime(
+                    '%d-%m-%Y')
+            except (ValueError, TypeError) as e:
+                print(f"Error processing closeTime: {e}")
+                ticker['openPositionDay'] = None
+        else:
+            print("closeTime not found or invalid in ticker")
+            ticker['openPositionDay'] = None
+
     current_date = statistics.mode([ticker['openPositionDay'] for ticker in main_data])
     not_usdt_symbols = [ticker['symbol'] for ticker in main_data if 'USDT' not in ticker['symbol']]
     delete_symbols = [ticker['symbol'] for ticker in main_data if ticker['openPositionDay'] != current_date]
