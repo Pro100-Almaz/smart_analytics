@@ -101,9 +101,9 @@ async def get_funding_data(interval: int = Query(7), token_data: Dict = Depends(
                 if data.get('funding_rate') > 0.01:
                     return_value['positive'][-1] += 1
                 if 0.005 != data.get('funding_rate') < 0.01:
-                    return_value['negative'] += 1
+                    return_value['negative'][-1] += 1
                 if data.get('funding_rate') == 0.01 or data.get('funding_rate') == 0.05:
-                    return_value['neutral'] += 1
+                    return_value['neutral'][-1] += 1
 
             with open(csv_file_path, mode='a', newline='') as file:
                 writer = csv.writer(file)
@@ -138,3 +138,4 @@ async def get_funding_history(token_data: Dict = Depends(JWTBearer())):
     )
 
     return {"status": "success", "data": data}
+

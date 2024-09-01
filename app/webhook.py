@@ -1,6 +1,7 @@
 from typing import Union
 
-from fastapi import HTTPException, APIRouter, Request
+from fastapi import HTTPException, APIRouter, Request, Depends
+from typing import Dict
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -10,6 +11,7 @@ import requests
 from app.database import database
 from i18n import i18n
 from .logger import logger
+from app.auth_bearer import JWTBearer
 
 
 load_dotenv()
@@ -187,6 +189,13 @@ async def webhook(update: Update):
 
     return {"Status": "ok"}
 
+
+@router.get("/send_funding_data", tags=["data"])
+async def get_funding_data_file(token_data: Dict = Depends(JWTBearer())):
+    user_id = token_data["user_id"]
+    csv_file_path = f"dataframes/funding_data_{user_id}.csv"
+    with open(csv_file_path, 'rb') as file:
+        pass
 
 # @router.on_event("startup")
 # async def on_startup():
