@@ -191,11 +191,19 @@ def get_funding_data():
     funding_response = requests.get("https://fapi.binance.com/fapi/v1/premiumIndex")
     if funding_response.status_code == 200:
         database.connect()
-        tickers = get_symbols()
 
         funding_data = funding_response.json() if funding_response.status_code == 200 else None
 
-        sorted_data_funding = sorted(funding_data, key=lambda x: float(x['lastFundingRate']))
+        tickers = get_symbols()
+
+        funding_rate_list = [
+            {
+                'symbol': value['symbol'],
+                'lastFundingRate': round(float(value['lastFundingRate']) * 100, 4),
+                'markPrice': float(value['markPrice'])
+            } for value in funding_data if value['symbol'] in tickers]
+
+        sorted_data_funding = sorted(funding_rate_list, key=lambda x: float(x['lastFundingRate']))
         now = datetime.datetime.now()
 
         try:
@@ -271,7 +279,6 @@ def get_funding_data():
 
             print("Check point 4!")
 
-
             json_data = json.dumps(redis_data)
             print("Check point 5!")
 
@@ -279,7 +286,7 @@ def get_funding_data():
         except Exception as e:
             logging.error(f"Error arose while trying to insert top tickets into Reddis, error message:{e}")
 
-        for record in funding_data:
+        for record in sorted_data_funding:
             try:
                 stock_id = database.execute_with_return(
                     """
@@ -300,8 +307,8 @@ def get_funding_data():
                 return "Error with DB"
 
             stock_id = stock_id[0][0]
-            funding_rate = Decimal(float(record["lastFundingRate"]) * 100).quantize(Decimal('.000000001'), rounding=ROUND_DOWN)
-            market_price = Decimal(float(record["markPrice"])).quantize(Decimal('.00000001'), rounding=ROUND_DOWN)
+            funding_rate = record["lastFundingRate"]
+            market_price = record["markPrice"]
 
             seconds = record["time"] / 1000.0
             time_value = datetime.datetime.fromtimestamp(seconds, tz=datetime.timezone.utc)
