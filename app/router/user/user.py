@@ -76,7 +76,7 @@ async def login_user(telegram_data: Authorization):
     token = create_access_token({"telegram_id": user_tg_data.get("id"), "username": user_tg_data.get("username"),
                                  "user_id": user_id})
 
-    return {"token": token, "user_id": user_id, "Status": "success", "username": user_tg_data.get("username")}
+    return {"token": token, "user_id": user_id, "status": status.HTTP_200_OK, "username": user_tg_data.get("username")}
 
 
 @router.get("/get_referral_link")
@@ -89,7 +89,7 @@ async def get_referral_link(token_data: Dict = Depends(JWTBearer())):
         """, token_data.get("user_id")
     )
 
-    return {"status": "success", "link": referral_link.get("referral_link")}
+    return {"status": status.HTTP_200_OK, "link": referral_link.get("referral_link")}
 
 
 @router.get("/get_notifications")
@@ -102,7 +102,7 @@ async def get_notification(token_data: Dict = Depends(JWTBearer())):
         """, token_data.get("user_id")
     )
 
-    return {"status": "success", "notifications": notifications}
+    return {"status": status.HTTP_200_OK, "notifications": notifications}
 
 
 @router.post("/set_notifications")
@@ -115,5 +115,5 @@ async def set_up_notifications(notifications: Notification, token_data: Dict = D
         """, token_data.get("user_id"), notifications.last_impulse, notifications.tracking_ticker
     )
 
-    return {"status": "success"}
+    return {"status": status.HTTP_200_OK}
 

@@ -117,7 +117,7 @@ async def get_funding_data(interval: int = Query(7), token_data: Dict = Depends(
             """, user_id, datetime.now(), positive_funding_rate_quantity, negative_funding_rate_quantity, neutral_funding_rate_quantity
         )
 
-        return {"status": "success",
+        return {"status": status.HTTP_200_OK,
                 "positive_quantity": positive_funding_rate_quantity,
                 "negative_quantity": negative_funding_rate_quantity,
                 "neutral_quantity": neutral_funding_rate_quantity,
@@ -137,5 +137,5 @@ async def get_funding_history(token_data: Dict = Depends(JWTBearer())):
         """, token_data.get("user_id")
     )
 
-    return {"status": "success", "data": data}
+    return {"status": status.HTTP_200_OK, "data": data}
 

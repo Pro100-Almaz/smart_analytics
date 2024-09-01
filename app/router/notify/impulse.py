@@ -25,7 +25,7 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
         """, token_data.get("user_id")
     )
 
-    return {"status": "success", "impulses": impulses}
+    return {"status": status.HTTP_200_OK, "impulses": impulses}
 
 
 @router.get("/get_impulse_history", tags=["notify"])
@@ -50,7 +50,7 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
         """, notifications_merged
     )
 
-    return {"status": "success", "impulses_history": impulses_history}
+    return {"status": status.HTTP_200_OK, "impulses_history": impulses_history}
 
 
 @router.delete("/delete_impulse", tags=["notify"])
@@ -68,7 +68,7 @@ async def delete_impulse(impulse_id: int = Query(None), token_data: Dict = Depen
     except:
         return {"status": "error", "message": "Impulse not found"}
 
-    return {"status": "success", "message": "Impulse deleted"}
+    return {"status": status.HTTP_200_OK, "message": "Impulse deleted"}
 
 
 @router.post("/set_impulse", tags=["notify"])
