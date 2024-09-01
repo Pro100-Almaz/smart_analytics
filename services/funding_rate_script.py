@@ -211,7 +211,8 @@ def get_funding_data():
             {
                 'symbol': value['symbol'],
                 'lastFundingRate': round(float(value['lastFundingRate']) * 100, 4),
-                'markPrice': float(value['markPrice'])
+                'markPrice': float(value['markPrice']),
+                'time': value['time']
             } for value in funding_data if value['symbol'] in tickers]
 
         sorted_data_funding = sorted(funding_rate_list, key=lambda x: float(x['lastFundingRate']))
