@@ -1,16 +1,14 @@
-from typing import Union
-
-from fastapi import HTTPException, APIRouter, Request, Depends
+from fastapi import APIRouter, Depends, Query
 from typing import Dict
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from telegram import Bot
 
 import os
 import requests
 
 from app.database import database
 from i18n import i18n
-from .logger import logger
 from app.auth_bearer import JWTBearer
 
 
@@ -22,6 +20,7 @@ WEBHOOK_URL = os.getenv('BASE_URL') + "/webhook"
 DEBUG = os.getenv('DEBUG', False)
 
 router = APIRouter()
+bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
 
 class Update(BaseModel):
@@ -193,9 +192,42 @@ async def webhook(update: Update):
 @router.get("/send_funding_data", tags=["data"])
 async def get_funding_data_file(token_data: Dict = Depends(JWTBearer())):
     user_id = token_data["user_id"]
+    telegram_id = token_data["telegram_id"]
+
     csv_file_path = f"dataframes/funding_data_{user_id}.csv"
     with open(csv_file_path, 'rb') as file:
-        pass
+        await bot.send_document(chat_id=telegram_id, document=file)
+
+    return {"Status": "ok"}
+
+
+@router.get("/send_growth_data", tags=["default"])
+async def download_growth(file_id: int = Query(), token_data: Dict = Depends(JWTBearer())):
+    if not file_id:
+        return {"Provide file id!"}
+
+    user_id = token_data["user_id"]
+
+    file_params = await database.fetchrow(
+        """
+        SELECT *
+        FROM data_history.growth_data_history
+        WHERE file_id = $1 AND user_id = $2;
+        """, file_id, user_id
+    )
+
+    date_param = file_params.get("date")
+    time_param = file_params.get("time")
+    file_name = file_params.get("file_name")
+
+    csv_file_path = f"dataframes/{user_id}/{date_param}/{time_param}/{file_name}"
+    telegram_id = token_data["telegram_id"]
+
+    with open(csv_file_path, 'rb') as file:
+        await bot.send_document(chat_id=telegram_id, document=file)
+
+    return {"Status": "ok"}
+
 
 # @router.on_event("startup")
 # async def on_startup():
