@@ -1,5 +1,5 @@
 import json
-from decimal import Decimal, ROUND_DOWN
+from decimal import Decimal
 
 import requests
 import datetime
