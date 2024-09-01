@@ -2,8 +2,7 @@ import json
 from decimal import Decimal
 
 import requests
-import datetime
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import time
 import statistics
@@ -64,7 +63,7 @@ def get_volume_data():
         updated_volume_data = [d for d in volume_data if d['symbol'] not in except_list]
 
         sorted_data_volume = sorted(updated_volume_data, key=lambda x: float(x['quoteVolume']))
-        now = datetime.datetime.now()
+        now = datetime.now()
 
         try:
             rounded_time = now.replace(second=0, microsecond=0)
@@ -131,8 +130,8 @@ def get_volume_data():
 
             stock_id = stock_id[0][0]
 
-            open_time = datetime.datetime.fromtimestamp(record["openTime"] / 1000.0)
-            close_time = datetime.datetime.fromtimestamp(record["closeTime"] / 1000.0)
+            open_time = datetime.fromtimestamp(record["openTime"] / 1000.0)
+            close_time = datetime.fromtimestamp(record["closeTime"] / 1000.0)
 
             try:
                 records_count = database.execute_with_return(
@@ -216,7 +215,7 @@ def get_funding_data():
             } for value in funding_data if value['symbol'] in tickers]
 
         sorted_data_funding = sorted(funding_rate_list, key=lambda x: float(x['lastFundingRate']))
-        now = datetime.datetime.now()
+        now = datetime.now()
 
         try:
             rounded_time = now.replace(second=0, microsecond=0)
@@ -323,7 +322,7 @@ def get_funding_data():
             market_price = record["markPrice"]
 
             seconds = record["time"] / 1000.0
-            time_value = datetime.datetime.fromtimestamp(seconds, tz=datetime.timezone.utc)
+            time_value = datetime.fromtimestamp(seconds, tz=timezone.utc)
 
             try:
                 records_count = database.execute_with_return(
