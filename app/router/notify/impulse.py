@@ -3,7 +3,7 @@ from typing import Dict
 
 from dotenv import load_dotenv
 
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 
 from app.database import database
 from app.auth_bearer import JWTBearer
@@ -25,20 +25,50 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
         """, token_data.get("user_id")
     )
 
-    return impulses
+    return {"status": "success", "impulses": impulses}
 
 
-# @router.get("/get_impulse_history", tags=["notify"])
-# async def get_impulse(token_data: Dict = Depends(JWTBearer())):
-#     impulses = await database.fetch(
-#         """
-#         SELECT *
-#         FROM users.notification
-#         WHERE
-#         """, token_data.get("user_id")
-#     )
-#
-#     return {}
+@router.get("/get_impulse_history", tags=["notify"])
+async def get_impulse(token_data: Dict = Depends(JWTBearer())):
+    notifications_id = await database.fetch(
+        """
+        SELECT id
+        FROM users.user_notification
+        WHERE user_id = $1 AND notification_type = 'last_impulse'
+        """, token_data.get("user_id")
+    )
+
+    notifications_merged = ",".join(notifications_id)
+
+    impulses_history = await database.fetch(
+        """
+        SELECT *
+        FROM users.notification
+        WHERE type IN ($1)
+        ORDER BY date DESC 
+        LIMIT 10;
+        """, notifications_merged
+    )
+
+    return {"status": "success", "impulses_history": impulses_history}
+
+
+@router.delete("/delete_impulse", tags=["notify"])
+async def delete_impulse(impulse_id: int = Query(None), token_data: Dict = Depends(JWTBearer())):
+    if impulse_id is None:
+        return {"status": "error", "message": "No impulse id"}
+
+    try:
+        await database.execute(
+            """
+            DELETE FROM users.user_notification
+            WHERE user_id = $1 AND id = $2
+            """, token_data.get("user_id"), impulse_id
+        )
+    except:
+        return {"status": "error", "message": "Impulse not found"}
+
+    return {"status": "success", "message": "Impulse deleted"}
 
 
 @router.post("/set_impulse", tags=["notify"])
