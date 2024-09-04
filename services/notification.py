@@ -13,9 +13,7 @@ SHARED_DICT_KEY = "binance:ticker:data"
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
 def last_impulse_notification():
-    print("I am in notification mode!")
     database.connect()
-    print("I am in notification mode!, database connected")
 
     prefix = "binance:ticker:data:"
 
@@ -34,7 +32,6 @@ def last_impulse_notification():
     for key in matching_keys:
         current_data[key] = pickle.loads(redis_database.get(key))
 
-    print("current data executed!")
 
     users = database.execute_with_return(
         """
@@ -45,8 +42,6 @@ def last_impulse_notification():
         """
     )
 
-    print(users)
-
     for user in users:
         user_interval, user_percent = user[1].split(":")
         user_percent = float(user_percent)
@@ -54,6 +49,7 @@ def last_impulse_notification():
         for data_active, data_intervals in current_data.items():
             data_intervals = dict(data_intervals)
             temp_data = data_intervals.get(user_interval, None)
+            print("temp_data", temp_data)
 
             min_diff = temp_data.get('diff', {})[0] if abs(min_diff) >= user_percent else False
             max_diff = temp_data.get('diff', {})[0] if abs(max_diff) >= user_percent else False
