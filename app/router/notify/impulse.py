@@ -38,7 +38,7 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
         """, token_data.get("user_id")
     )
 
-    notifications_merged = ",".join(notifications_id)
+    notifications_merged = ",".join(notifications_id[0])
 
     impulses_history = await database.fetch(
         """
