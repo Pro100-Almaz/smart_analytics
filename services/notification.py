@@ -46,6 +46,8 @@ def last_impulse_notification():
         user_interval, user_percent = user[1].split(":")
         user_percent = float(user_percent)
 
+        print("state_check:", current_data)
+
         for data_active, data_intervals in current_data.items():
             print("state_check:", current_data)
             data_intervals = dict(data_intervals)
