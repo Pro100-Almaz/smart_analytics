@@ -105,7 +105,10 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
                                     push_stock_data.delay(active_name, last_value)
                                     save_websocket_data(active_data.get('data', {}).get('k', {}))
 
-                            last_impulse_notification()
+                            try:
+                                last_impulse_notification()
+                            except Exception as e:
+                                print("Error while sending notification: ", e)
 
                         elif msg.type == aiohttp.WSMsgType.PING:
                             await ws.pong(msg.data)
