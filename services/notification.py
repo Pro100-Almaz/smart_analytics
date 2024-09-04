@@ -15,6 +15,7 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 def last_impulse_notification():
     print("I am in notification mode!")
     database.connect()
+    print("I am in notification mode!, database connected")
 
     prefix = "binance:ticker:data:"
 
@@ -33,6 +34,8 @@ def last_impulse_notification():
     for key in matching_keys:
         current_data[key] = pickle.loads(redis_database.get(key))
 
+    print("current data executed!")
+
     users = database.execute_with_return(
         """
             SELECT un.user_id, condition, id
@@ -41,6 +44,8 @@ def last_impulse_notification():
             WHERE notification_type = 'last_impulse' AND active = true;
         """
     )
+
+    print(users)
 
     for user in users:
         user_interval, user_percent = user[1].split(":")
@@ -52,6 +57,7 @@ def last_impulse_notification():
 
             min_diff = temp_data.get('diff', {})[0] if abs(min_diff) >= user_percent else False
             max_diff = temp_data.get('diff', {})[0] if abs(max_diff) >= user_percent else False
+            print(f"I am in notification mode! line 57, the values: min = {min_diff} max = {max_diff}")
 
             if temp_data and (min_diff or max_diff):
                 print(f"I am in notification mode! line 57, the values: min = {min_diff} max = {max_diff}")
