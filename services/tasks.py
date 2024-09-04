@@ -86,16 +86,11 @@ def push_stock_data(stock_symbol, new_data: float):
                 current_data["diff"] = [round((current_data.get("min", 0) - new_data) / abs(new_data) * 100, 3),
                                         round((current_data.get("max", 0) - new_data) / abs(new_data) * 100, 3)
                                         ]
-            else:
-                current_data["diff"] = [new_data, new_data]
-
 
             min_value = min(sliding_window)
             max_value = max(sliding_window)
             current_data["min"] = min_value
             current_data["max"] = max_value
-
-    print("The value in celery: ", shared_dict)
 
     redis_client.set(stock_key, pickle.dumps(shared_dict))
     redis_client.expire(stock_key, 3600)
@@ -112,7 +107,10 @@ def push_stock_data(stock_symbol, new_data: float):
 @app.task
 def update_stock_data(stock_symbol, new_data: float):
     stock_key = f"{SHARED_DICT_KEY}:{stock_symbol}"
-    shared_dict = pickle.loads(redis_client.get(stock_key))
+    try:
+        shared_dict = pickle.loads(redis_client.get(stock_key))
+    except:
+        return "create_stock_key"
 
     for interval_type, current_data in shared_dict.items():
         if interval_type == "1_min":
