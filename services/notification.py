@@ -54,6 +54,8 @@ def last_impulse_notification():
             max_diff = temp_data.get('diff', {})[0] if abs(max_diff) >= user_percent else False
 
             if temp_data and (min_diff or max_diff):
+                print(f"I am in notification mode! line 57, the values: min = {min_diff} max = {max_diff}")
+
                 telegram_id = database.execute_with_return(
                     """
                         SELECT telegram_id
@@ -80,6 +82,8 @@ def last_impulse_notification():
                         LIMIT 1;
                     """, (active_name, telegram_id)
                 )
+
+                print("I am in notification mode! line 86")
 
                 if is_it_sent:
                     continue
@@ -111,6 +115,8 @@ def last_impulse_notification():
 
                 response = requests.post(url, json=payload)
 
+                print("I am in notification mode! line 118 and response is: ", response.text)
+
                 day_before_price = database.execute_with_return(
                     """
                     SELECT close_price
@@ -121,6 +127,8 @@ def last_impulse_notification():
                     LIMIT 1 OFFSET 1439;
                     """, (active_name,)
                 )
+
+                print("I am in notification mode! line 131")
 
                 current_price = temp_data.get('values', [])[-1]
                 day_percent = round(((current_price - day_before_price[0][0]) / day_before_price[0][0]) * 100, 2)
