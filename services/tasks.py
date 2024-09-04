@@ -42,7 +42,7 @@ def push_stock_data(stock_symbol, new_data: float):
     if not redis_client.exists(stock_key):
         shared_dict = {
             "1_min": {
-                "value": None,
+                "value": new_data,
                 "diff": []
             },
             "5_min": {
@@ -66,6 +66,7 @@ def push_stock_data(stock_symbol, new_data: float):
         }
     else:
         shared_dict = pickle.loads(redis_client.get(stock_key))
+
     for interval_type, current_data in shared_dict.items():
         if interval_type == "1_min":
             if current_data.get("value"):
@@ -75,7 +76,7 @@ def push_stock_data(stock_symbol, new_data: float):
             else:
                 current_data["diff"] = [new_data, 0]
 
-            current_data["value"] = float(new_data)
+            current_data["value"] = new_data
         else:
             sliding_window = current_data.get("values")
             sliding_window.append(new_data)
@@ -89,6 +90,8 @@ def push_stock_data(stock_symbol, new_data: float):
             max_value = max(sliding_window)
             current_data["min"] = min_value
             current_data["max"] = max_value
+
+    print("The value in celery: ", shared_dict)
 
     redis_client.set(stock_key, pickle.dumps(shared_dict))
     redis_client.expire(stock_key, 3600)
