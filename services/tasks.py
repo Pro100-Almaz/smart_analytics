@@ -37,6 +37,7 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
 @app.task
 def push_stock_data(stock_symbol, new_data: float):
+    print(f"THE VALUE ACCEPTED IS: {stock_symbol} , {new_data}")
     stock_key = f"{SHARED_DICT_KEY}:{stock_symbol}"
 
     if not redis_client.exists(stock_key):
@@ -105,7 +106,7 @@ def push_stock_data(stock_symbol, new_data: float):
             break
 
 
-@shared_task
+@app.task
 def update_stock_data(stock_symbol, new_data: float):
     stock_key = f"{SHARED_DICT_KEY}:{stock_symbol}"
     shared_dict = pickle.loads(redis_client.get(stock_key))
