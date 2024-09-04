@@ -43,7 +43,7 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
 
     impulses_history = await database.fetch(
         f"""
-        SELECT *
+        SELECT active_name, date, percent, day_percent
         FROM users.notification
         WHERE type IN ({placeholders})
         ORDER BY date DESC 

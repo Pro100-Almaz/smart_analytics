@@ -124,13 +124,15 @@ def last_impulse_notification():
 
                 current_price = temp_data.get('values', [])[-1]
                 day_percent = round(((current_price - day_before_price[0][0]) / day_before_price[0][0]) * 100, 2)
-
-                database.execute(
-                    """
-                        INSERT INTO users.notification (type, date, text, status, active_name, telegram_id, percent, day_percent)
-                        VALUES (%s, current_timestamp, %s, %s, %s, %s);
-                    """, (user[2], response.text, response.ok, active_name, telegram_id, percent, day_percent)
-                )
+                try:
+                    database.execute(
+                        """
+                            INSERT INTO users.notification (type, date, text, status, active_name, telegram_id, percent, day_percent)
+                            VALUES (%s, current_timestamp, %s, %s, %s, %s);
+                        """, (user[2], response.text, response.ok, active_name, telegram_id, percent, day_percent)
+                    )
+                except Exception as e:
+                    print(e)
 
                 return f"send_notify to user: {user[0]}"
 
