@@ -30,6 +30,7 @@ def last_impulse_notification():
 
     matching_keys = [key.decode("utf-8") for key in matching_keys]
     for key in matching_keys:
+        print(key)
         current_data[key] = pickle.loads(redis_database.get(key))
 
 
