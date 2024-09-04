@@ -38,16 +38,17 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
         """, token_data.get("user_id")
     )
 
-    notifications_merged = ",".join(notifications_id[0])
+    notifications_merged = [not_id.get('id') for not_id in notifications_id]
+    placeholders = ','.join(f"${i + 1}" for i in range(len(notifications_merged)))
 
     impulses_history = await database.fetch(
-        """
+        f"""
         SELECT *
         FROM users.notification
-        WHERE type IN ($1)
+        WHERE type IN ({placeholders})
         ORDER BY date DESC 
         LIMIT 10;
-        """, notifications_merged
+        """, *notifications_merged
     )
 
     return {"status": status.HTTP_200_OK, "impulses_history": impulses_history}
