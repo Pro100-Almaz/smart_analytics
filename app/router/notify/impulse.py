@@ -106,7 +106,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
             print(e)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Error arose while adding new notification."
+                detail="Error arose while adding new notification. Condition 1"
             )
 
     else:
@@ -133,7 +133,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
             print(e)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Error arose while adding new notification."
+                detail="Error arose while adding new notification. Condition 2"
             )
 
     return {"Success": True}
