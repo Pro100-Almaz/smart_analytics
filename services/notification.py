@@ -30,7 +30,6 @@ def last_impulse_notification():
 
     matching_keys = [key.decode("utf-8") for key in matching_keys]
     for key in matching_keys:
-        print(key)
         current_data[key] = pickle.loads(redis_database.get(key))
 
 
@@ -47,21 +46,14 @@ def last_impulse_notification():
         user_interval, user_percent = user[1].split(":")
         user_percent = float(user_percent)
 
-        print("state_check:", current_data)
-
         for data_active, data_intervals in current_data.items():
-            print("state_check:", current_data)
             data_intervals = dict(data_intervals)
             temp_data = data_intervals.get(user_interval, None)
-            print("temp_data", temp_data)
 
             min_diff = temp_data.get('diff', {})[0] if abs(min_diff) >= user_percent else False
             max_diff = temp_data.get('diff', {})[0] if abs(max_diff) >= user_percent else False
-            print(f"I am in notification mode! line 57, the values: min = {min_diff} max = {max_diff}")
 
             if temp_data and (min_diff or max_diff):
-                print(f"I am in notification mode! line 57, the values: min = {min_diff} max = {max_diff}")
-
                 telegram_id = database.execute_with_return(
                     """
                         SELECT telegram_id
@@ -88,8 +80,6 @@ def last_impulse_notification():
                         LIMIT 1;
                     """, (active_name, telegram_id)
                 )
-
-                print("I am in notification mode! line 86")
 
                 if is_it_sent:
                     continue
@@ -120,21 +110,21 @@ def last_impulse_notification():
                 }
 
                 response = requests.post(url, json=payload)
+                try:
+                    day_before_price = database.execute_with_return(
+                        """
+                        SELECT close_price
+                        FROM data_history.funding t1
+                        JOIN data_history.kline_1 t2 ON t1.stock_id = t2.stock_id
+                        WHERE t1.symbol = %s
+                        ORDER BY t2.open_time DESC 
+                        LIMIT 1 OFFSET 1439;
+                        """, (active_name,)
+                    )
+                except Exception as e:
+                    print("Error arose while making query of day_before_price: ", e)
 
-                print("I am in notification mode! line 118 and response is: ", response.text)
-
-                day_before_price = database.execute_with_return(
-                    """
-                    SELECT close_price
-                    FROM data_history.funding t1
-                    JOIN data_history.kline_1 t2 ON t1.stock_id = t2.stock_id
-                    WHERE t1.symbol = %s
-                    ORDER BY t2.open_time DESC 
-                    LIMIT 1 OFFSET 1439;
-                    """, (active_name,)
-                )
-
-                print("I am in notification mode! line 131")
+                print("Making the notification")
 
                 current_price = temp_data.get('values', [])[-1]
                 day_percent = round(((current_price - day_before_price[0][0]) / day_before_price[0][0]) * 100, 2)
@@ -146,7 +136,7 @@ def last_impulse_notification():
                         """, (user[2], response.text, response.ok, active_name, telegram_id, percent, day_percent)
                     )
                 except Exception as e:
-                    print(e)
+                    print("Error arose while saving data into users.notification: ",e)
 
                 return f"send_notify to user: {user[0]}"
 
