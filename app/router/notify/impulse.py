@@ -120,7 +120,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
                     ORDER BY created ASC
                     LIMIT 1
                 );
-                """
+                """, token_data.get("user_id")
             )
 
             await database.execute(
