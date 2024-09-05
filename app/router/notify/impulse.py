@@ -79,7 +79,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
             WITH notification_count AS (
                 SELECT COUNT(*) AS count
                 FROM users.user_notification
-                WHERE user_id = $1 AND notification_type = 'last_impulse'
+                WHERE user_id = $1 AND notification_type = 'last_impulse' AND active = true
             )
             SELECT 
                 CASE 
@@ -113,7 +113,9 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
         try:
             await database.execute(
                 """
-                DELETE FROM users.user_notification WHERE id = (
+                UPDATE users.user_notification 
+                SET active = false
+                WHERE id = (
                     SELECT id
                     FROM users.user_notification
                     WHERE user_id = $1
