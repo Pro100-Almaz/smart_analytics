@@ -62,7 +62,8 @@ async def delete_impulse(impulse_id: int = Query(None), token_data: Dict = Depen
     try:
         await database.execute(
             """
-            DELETE FROM users.user_notification
+            UPDATE users.user_notification
+            SET active = false
             WHERE user_id = $1 AND id = $2
             """, token_data.get("user_id"), impulse_id
         )
