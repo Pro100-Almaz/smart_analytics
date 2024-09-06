@@ -50,8 +50,8 @@ def last_impulse_notification():
             data_intervals = dict(data_intervals)
             temp_data = data_intervals.get(user_interval, None)
 
-            min_diff = temp_data.get('diff', {})[0] if abs(min_diff) >= user_percent else False
-            max_diff = temp_data.get('diff', {})[0] if abs(max_diff) >= user_percent else False
+            min_diff = temp_data.get('diff', {})[0] if abs(temp_data.get('diff', {})[0]) >= user_percent else False
+            max_diff = temp_data.get('diff', {})[1] if abs(temp_data.get('diff', {})[1]) >= user_percent else False
 
             if temp_data and (min_diff or max_diff):
                 telegram_id = database.execute_with_return(
