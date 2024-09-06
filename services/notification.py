@@ -129,13 +129,16 @@ def last_impulse_notification():
                     continue
 
                 print("Making the notification")
-                print("Testing value of day_before_price: ", day_before_price)
+                print("Testing value of current_price: ", temp_data.get('values', []))
 
                 current_price = temp_data.get('values', [])[-1]
 
                 print("Current price: ", current_price)
                 print("--------------------------------------------------------")
-                day_percent = round(((current_price - day_before_price[0][0]) / day_before_price[0][0]) * 100, 2)
+                if day_before_price:
+                    day_percent = round(((current_price - day_before_price[0][0]) / day_before_price[0][0]) * 100, 2)
+                else:
+                    day_percent = 0
                 try:
                     database.execute(
                         """
