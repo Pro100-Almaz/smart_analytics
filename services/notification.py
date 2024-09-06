@@ -49,13 +49,17 @@ def last_impulse_notification():
         for data_active, data_intervals in current_data.items():
             data_intervals = dict(data_intervals)
             temp_data = data_intervals.get(user_interval, None)
+            try:
+                print("The data value is: ", temp_data.get('diff', [])[0])
+                print("The data value is: ", temp_data.get('diff', [])[1])
+            except:
+                print("The data value is: ", temp_data.get('diff', [])[0])
 
-            print("The data value is: ", temp_data)
             print("------------------------------------")
 
             try:
-                min_diff = temp_data.get('diff', {})[0] if abs(temp_data.get('diff', {})[0]) >= user_percent else False
-                max_diff = temp_data.get('diff', {})[1] if abs(temp_data.get('diff', {})[1]) >= user_percent else False
+                min_diff = temp_data.get('diff', [])[0] if abs(temp_data.get('diff', [])[0]) >= user_percent else False
+                max_diff = temp_data.get('diff', [])[1] if abs(temp_data.get('diff', [])[1]) >= user_percent else False
             except Exception as e:
                 continue
 
