@@ -72,8 +72,7 @@ def push_stock_data(stock_symbol, new_data: float):
         if interval_type == "1_min":
             if current_data.get("value"):
                 old_data = current_data.get("value", 0.001)
-                current_data["diff"] = [old_data - new_data,
-                                        round((old_data - new_data) / abs(old_data) * 100, 3)]
+                current_data["diff"] = [round((old_data - new_data) / abs(old_data) * 100, 3)]
             else:
                 current_data["diff"] = [new_data, 0]
 
@@ -116,8 +115,7 @@ def update_stock_data(stock_symbol, new_data: float):
         if interval_type == "1_min":
             if current_data.get("value"):
                 old_data = current_data.get("value", 0.001)
-                current_data["diff"] = [old_data - new_data,
-                                        round((old_data - new_data) / abs(old_data) * 100, 3)]
+                current_data["diff"] = [round((old_data - new_data) / abs(old_data) * 100, 3)]
             else:
                 current_data["diff"] = [new_data, 0]
         else:

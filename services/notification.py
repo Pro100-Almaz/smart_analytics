@@ -50,8 +50,14 @@ def last_impulse_notification():
             data_intervals = dict(data_intervals)
             temp_data = data_intervals.get(user_interval, None)
 
-            min_diff = temp_data.get('diff', {})[0] if abs(temp_data.get('diff', {})[0]) >= user_percent else False
-            max_diff = temp_data.get('diff', {})[1] if abs(temp_data.get('diff', {})[1]) >= user_percent else False
+            print("The data value is: ", temp_data)
+            print("------------------------------------")
+
+            try:
+                min_diff = temp_data.get('diff', {})[0] if abs(temp_data.get('diff', {})[0]) >= user_percent else False
+                max_diff = temp_data.get('diff', {})[1] if abs(temp_data.get('diff', {})[1]) >= user_percent else False
+            except Exception as e:
+                continue
 
             if temp_data and (min_diff or max_diff):
                 telegram_id = database.execute_with_return(
@@ -84,7 +90,7 @@ def last_impulse_notification():
                 if is_it_sent:
                     continue
 
-                percent = max_diff if max_diff != False else min_diff
+                percent = min_diff if min_diff != False else max_diff
 
                 url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
