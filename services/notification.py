@@ -137,8 +137,6 @@ def last_impulse_notification():
                     day_percent = 0
 
                 try:
-                    print(type(day_percent))
-                    print(type(percent))
                     database.execute(
                         """
                             INSERT INTO users.notification (type, date, text, status, active_name, telegram_id, percent, day_percent)
