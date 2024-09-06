@@ -128,7 +128,7 @@ def last_impulse_notification():
                     print("Error arose while making query of day_before_price: ", e)
                     continue
 
-                print("Making the notification, response status: ", response.ok)
+                print("Making the notification, response status: ", response.text)
                 current_price = temp_data.get('values', [])[-1]
 
                 if day_before_price:
