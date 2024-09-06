@@ -136,6 +136,8 @@ def last_impulse_notification():
                 else:
                     day_percent = 0
 
+                print("Calculational manipulation1")
+
                 try:
                     database.execute(
                         """
