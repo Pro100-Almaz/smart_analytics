@@ -129,26 +129,21 @@ def last_impulse_notification():
                     continue
 
                 print("Making the notification")
-                print("Testing value of current_price: ", temp_data.get('values', []))
-
                 current_price = temp_data.get('values', [])[-1]
 
-                print("Current price: ", current_price)
-                print("--------------------------------------------------------")
                 if day_before_price:
                     day_percent = round(((current_price - day_before_price[0][0]) / day_before_price[0][0]) * 100, 2)
                 else:
                     day_percent = 0
+
                 try:
                     database.execute(
                         """
                             INSERT INTO users.notification (type, date, text, status, active_name, telegram_id, percent, day_percent)
-                            VALUES (%s, current_timestamp, %s, %s, %s, %s);
+                            VALUES (%s, current_timestamp, %s, %s, %s, %s, $s, $s);
                         """, (user[2], response.text, response.ok, active_name, telegram_id, percent, day_percent)
                     )
                 except Exception as e:
-                    print("Error arose while saving data into users.notification: ",e)
-
-                return f"send_notify to user: {user[0]}"
+                    print("Error arose while saving data into users.notification: ", e)
 
     database.disconnect()
