@@ -128,7 +128,7 @@ def last_impulse_notification():
                     print("Error arose while making query of day_before_price: ", e)
                     continue
 
-                print("Making the notification")
+                print("Making the notification, response status: ", response.ok)
                 current_price = temp_data.get('values', [])[-1]
 
                 if day_before_price:
@@ -136,9 +136,9 @@ def last_impulse_notification():
                 else:
                     day_percent = 0
 
-                print("Calculational manipulation1")
-
                 try:
+                    print(type(day_percent))
+                    print(type(percent))
                     database.execute(
                         """
                             INSERT INTO users.notification (type, date, text, status, active_name, telegram_id, percent, day_percent)
