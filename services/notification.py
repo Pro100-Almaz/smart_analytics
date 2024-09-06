@@ -56,11 +56,6 @@ def last_impulse_notification():
             except Exception as e:
                 continue
 
-            print("The data value is: ", min_diff)
-            print("The data value is: ", max_diff)
-
-            print("------------------------------------")
-
             if temp_data and (min_diff or max_diff):
                 telegram_id = database.execute_with_return(
                     """
@@ -131,10 +126,15 @@ def last_impulse_notification():
                     )
                 except Exception as e:
                     print("Error arose while making query of day_before_price: ", e)
+                    continue
 
                 print("Making the notification")
+                print("Testing value of day_before_price: ", day_before_price)
 
                 current_price = temp_data.get('values', [])[-1]
+
+                print("Current price: ", current_price)
+                print("--------------------------------------------------------")
                 day_percent = round(((current_price - day_before_price[0][0]) / day_before_price[0][0]) * 100, 2)
                 try:
                     database.execute(
