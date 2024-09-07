@@ -1,4 +1,5 @@
 import os
+import logging
 
 import requests
 import pickle
@@ -6,6 +7,9 @@ from dotenv import load_dotenv
 
 from database import database, redis_database
 
+
+logging.basicConfig(filename='logs/notification.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
