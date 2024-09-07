@@ -72,7 +72,7 @@ def push_stock_data(stock_symbol, new_data: float):
         if interval_type == "1_min":
             if current_data.get("value"):
                 old_data = current_data.get("value", 0.001)
-                current_data["diff"] = [round(((new_data - old_data) / abs(old_data) * 100), 2)]
+                current_data["diff"] = [round((old_data * 100 / new_data) - 100, 2)]
             else:
                 current_data["diff"] = [0]
 
@@ -82,9 +82,14 @@ def push_stock_data(stock_symbol, new_data: float):
             sliding_window.append(new_data)
 
             if current_data.get("min") and current_data.get("max"):
+                # current_data["diff"] = [
+                #     round(((new_data - current_data.get("min", 0)) / abs(current_data.get("min", 0)) * 100), 2),
+                #     round(((new_data - current_data.get("max", 0)) / abs(current_data.get("max", 0)) * 100), 2)
+                # ]
+
                 current_data["diff"] = [
-                    round(((new_data - current_data.get("min", 0)) / abs(current_data.get("min", 0)) * 100), 2),
-                    round(((new_data - current_data.get("max", 0)) / abs(current_data.get("max", 0)) * 100), 2)
+                        round((current_data.get("min", 0) * 100 / new_data) - 100, 2),
+                        round((current_data.get("max", 0) * 100 / new_data) - 100, 2),
                 ]
 
             min_value = min(sliding_window)
@@ -116,16 +121,20 @@ def update_stock_data(stock_symbol, new_data: float):
         if interval_type == "1_min":
             if current_data.get("value"):
                 old_data = current_data.get("value", 0.001)
-                current_data["diff"] = [round(((new_data - old_data) / abs(old_data) * 100), 2)]
+                current_data["diff"] = [round((old_data * 100 / new_data) - 100, 2)]
             else:
-                current_data["diff"] = [new_data, 0]
+                current_data["diff"] = [0]
         else:
             sliding_window = current_data.get("values")
             sliding_window[-1] = new_data
 
+            # current_data["diff"] = [
+            #     round(((new_data - current_data.get("min", 0)) / abs(current_data.get("min", 0)) * 100), 2),
+            #     round(((new_data - current_data.get("max", 0)) / abs(current_data.get("max", 0)) * 100), 2)
+            # ]
             current_data["diff"] = [
-                round(((new_data - current_data.get("min", 0)) / abs(current_data.get("min", 0)) * 100), 2),
-                round(((new_data - current_data.get("max", 0)) / abs(current_data.get("max", 0)) * 100), 2)
+                round((current_data.get("min", 0) * 100 / new_data) - 100, 2),
+                round((current_data.get("max", 0) * 100 / new_data) - 100, 2),
             ]
 
             min_value = min(sliding_window)
