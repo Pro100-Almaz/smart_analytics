@@ -72,7 +72,7 @@ def last_impulse_notification():
                 active_name = (data_active.split(":"))[-1]
                 telegram_id = telegram_id[0][0]
 
-                print(f"Time interval: {}, Active name: {active_name}, The receiver telegram id is: {telegram_id}")
+                print(f"Active name: {active_name}, The receiver telegram id is: {telegram_id}")
 
                 is_it_sent = database.execute_with_return(
                     """
