@@ -83,8 +83,8 @@ def push_stock_data(stock_symbol, new_data: float):
 
             if current_data.get("min") and current_data.get("max"):
                 current_data["diff"] = [
-                    round(new_data - (current_data.get("min", 0)) / abs(current_data.get("min", 0)) * 100, 2),
-                    round(new_data - (current_data.get("max", 0)) / abs(current_data.get("max", 0)) * 100, 2)
+                    round((new_data - current_data.get("min", 0)) / abs(current_data.get("min", 0)) * 100, 2),
+                    round((new_data - current_data.get("max", 0)) / abs(current_data.get("max", 0)) * 100, 2)
                 ]
 
             min_value = min(sliding_window)
@@ -124,8 +124,8 @@ def update_stock_data(stock_symbol, new_data: float):
             sliding_window[-1] = new_data
 
             current_data["diff"] = [
-                round(new_data - (current_data.get("min", 0)) / abs(current_data.get("min", 0)) * 100, 2),
-                round(new_data - (current_data.get("max", 0)) / abs(current_data.get("max", 0)) * 100, 2)
+                round((new_data -current_data.get("min", 0)) / abs(current_data.get("min", 0)) * 100, 2),
+                round((new_data - current_data.get("max", 0)) / abs(current_data.get("max", 0)) * 100, 2)
                 ]
 
             min_value = min(sliding_window)
