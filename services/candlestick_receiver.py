@@ -91,7 +91,7 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
                             active_data = json.loads(msg.data)
                             current_time = unix_to_date(active_data.get('data', {}).get('k', {}).get('T'))
                             active_name = active_data.get('data', {}).get('s')
-                            last_value = float(active_data.get('data', {}).get('k', {}).get('l'))
+                            last_value = float(active_data.get('data', {}).get('k', {}).get('c'))
 
                             if phase_minute != current_time:
                                 phase_minute = current_time
