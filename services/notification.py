@@ -90,7 +90,7 @@ def last_impulse_notification():
                     """, (active_name, telegram_id)
                 )
 
-                if is_it_sent:
+                if is_it_sent and is_it_sent.get('is_less_than_one_hour'):
                     continue
 
                 percent = min_diff if min_diff != False else max_diff
