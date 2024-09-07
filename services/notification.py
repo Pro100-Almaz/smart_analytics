@@ -1,15 +1,12 @@
 import os
-import logging
 
 import requests
 import pickle
 from dotenv import load_dotenv
 
 from database import database, redis_database
+from candlestick_receiver import logger
 
-
-logging.basicConfig(filename='logs/notification.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -48,6 +45,7 @@ def last_impulse_notification():
     )
 
     for user in users:
+        print(user)
         user_interval, user_percent = user[1].split(":")
         user_percent = float(user_percent)
 
