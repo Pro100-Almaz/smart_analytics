@@ -241,10 +241,10 @@ def get_funding_data():
 
                 quote_volume_5m = database.execute_with_return(
                     """
-                    SELECT quote_volume
-                    FROM data_history.volume_data
+                    SELECT funding_rate
+                    FROM data_history.funding_data
                     WHERE stock_id = %s
-                    ORDER BY open_time DESC
+                    ORDER BY funding_time DESC
                     LIMIT 1 OFFSET 4;
                     """, (stock_id,)
                 )
@@ -270,10 +270,10 @@ def get_funding_data():
 
                 quote_volume_5m = database.execute_with_return(
                     """
-                    SELECT quote_volume
-                    FROM data_history.volume_data
+                    SELECT funding_rate
+                    FROM data_history.funding_data
                     WHERE stock_id = %s
-                    ORDER BY open_time
+                    ORDER BY funding_time
                     LIMIT 1 OFFSET 4;
                     """, (stock_id,)
                 )
