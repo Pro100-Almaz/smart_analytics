@@ -58,6 +58,8 @@ def last_impulse_notification():
             except Exception as e:
                 continue
 
+            print("Min/max values is equal to: ", min_diff, max_diff)
+
             if temp_data and (min_diff or max_diff):
                 telegram_id = database.execute_with_return(
                     """
@@ -69,6 +71,8 @@ def last_impulse_notification():
 
                 active_name = (data_active.split(":"))[-1]
                 telegram_id = telegram_id[0][0]
+
+                print("The receiver telegram id is: ", telegram_id)
 
                 is_it_sent = database.execute_with_return(
                     """
@@ -113,6 +117,8 @@ def last_impulse_notification():
                     "chat_id": telegram_id,
                     "text": text_for_notification
                 }
+
+                print("Before making telegram bot request, payload is: ", payload)
 
                 response = requests.post(url, json=payload)
                 try:
