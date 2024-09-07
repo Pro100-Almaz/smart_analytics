@@ -21,7 +21,7 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
         """
         SELECT *
         FROM users.user_notification
-        WHERE user_id = $1 AND notification_type = 'last_impulse'
+        WHERE user_id = $1 AND notification_type = 'last_impulse' AND active = true
         """, token_data.get("user_id")
     )
 
@@ -29,12 +29,12 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
 
 
 @router.get("/get_impulse_history", tags=["notify"])
-async def get_impulse(token_data: Dict = Depends(JWTBearer())):
+async def get_impulse_history(token_data: Dict = Depends(JWTBearer())):
     notifications_id = await database.fetch(
         """
         SELECT id
         FROM users.user_notification
-        WHERE user_id = $1 AND notification_type = 'last_impulse'
+        WHERE user_id = $1 AND notification_type = 'last_impulse' AND active = true
         """, token_data.get("user_id")
     )
 
