@@ -119,7 +119,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
                 WHERE id = (
                     SELECT id
                     FROM users.user_notification
-                    WHERE user_id = $1
+                    WHERE user_id = $1 AND active = true
                     ORDER BY created
                     LIMIT 1
                 );
