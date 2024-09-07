@@ -34,9 +34,21 @@ import datetime
 #         print(datetime.datetime.fromtimestamp(volume_data[0]["fundingTime"] / 1000.0))
 #         sleep(60)
 
-from celery import Celery
+# from celery import Celery
+#
+# app = Celery('stock_updater')
+#
+# # Purge all tasks from the specified queue
+# app.control.purge()
+import redis
+import pickle
 
-app = Celery('stock_updater')
+REDIS_HOST = "localhost"
+REDIS_PORT = 12228
+REDIS_DB = 0
 
-# Purge all tasks from the specified queue
-app.control.purge()
+redis_database = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
+
+shared_dict = pickle.loads(redis_database.get("binance:ticker:data:APEUSDT"))
+
+print(shared_dict)
