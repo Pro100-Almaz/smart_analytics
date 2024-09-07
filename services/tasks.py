@@ -88,8 +88,8 @@ def push_stock_data(stock_symbol, new_data: float):
                 # ]
 
                 current_data["diff"] = [
-                        round((current_data.get("min", 0) * 100 / new_data) - 100, 2),
-                        round((current_data.get("max", 0) * 100 / new_data) - 100, 2),
+                    round((current_data.get("min", 0) * 100 / new_data) - 100, 2),
+                    round((current_data.get("max", 0) * 100 / new_data) - 100, 2),
                 ]
 
             min_value = min(sliding_window)
