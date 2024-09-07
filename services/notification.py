@@ -5,7 +5,6 @@ import pickle
 from dotenv import load_dotenv
 
 from database import database, redis_database
-from candlestick_receiver import logger
 
 
 load_dotenv()
