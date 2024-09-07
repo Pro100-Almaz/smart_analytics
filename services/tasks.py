@@ -1,4 +1,6 @@
 import os
+import pika
+import json
 
 import requests
 from dotenv import load_dotenv
@@ -34,6 +36,25 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 #     except Exception as e:
 #         print(f"Error closing database connection: {e}")
 
+# def send_to_rabbitmq(message):
+#     # Establish a connection with RabbitMQ
+#     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+#     channel = connection.channel()
+#
+#     # Declare the queue to ensure it exists
+#     channel.queue_declare(queue='telegram_queue')
+#
+#     # Publish the message to the queue
+#     channel.basic_publish(
+#         exchange='',
+#         routing_key='telegram_queue',
+#         body=json.dumps(message)
+#     )
+#
+#     print(f" [x] Sent {message}")
+#
+#     # Close the connection
+#     connection.close()
 
 @app.task
 def push_stock_data(stock_symbol, new_data: float):

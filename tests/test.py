@@ -49,6 +49,6 @@ REDIS_DB = 0
 
 redis_database = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 
-shared_dict = pickle.loads(redis_database.get("binance:ticker:data:REEFUSDT"))
+shared_dict = pickle.loads(redis_database.get("binance:ticker:data:NEIROETHUSDT"))
 
 print(shared_dict)

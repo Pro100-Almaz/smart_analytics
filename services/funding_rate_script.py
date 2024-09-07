@@ -43,7 +43,7 @@ def get_volume_data():
             if 'closeTime' in ticker and ticker['closeTime'] is not None:
                 try:
                     ticker['openPositionDay'] = datetime.fromtimestamp(ticker['closeTime'] / 1000).strftime(
-                        '%d-%m-%Y')
+                        '%d-%m-%Y | %H')
                 except (ValueError, TypeError) as e:
                     print(f"Error processing closeTime: {e}")
                     ticker['openPositionDay'] = None
@@ -179,7 +179,7 @@ def get_symbols():
         if 'closeTime' in ticker and ticker['closeTime'] is not None:
             try:
                 ticker['openPositionDay'] = datetime.fromtimestamp(ticker['closeTime'] / 1000).strftime(
-                    '%d-%m-%Y')
+                    '%d-%m-%Y | %H')
             except (ValueError, TypeError) as e:
                 print(f"Error processing closeTime: {e}")
                 ticker['openPositionDay'] = None
