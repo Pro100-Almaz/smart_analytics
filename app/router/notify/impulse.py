@@ -120,7 +120,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
                     SELECT id
                     FROM users.user_notification
                     WHERE user_id = $1
-                    ORDER BY created ASC
+                    ORDER BY created
                     LIMIT 1
                 );
                 """, token_data.get("user_id")
