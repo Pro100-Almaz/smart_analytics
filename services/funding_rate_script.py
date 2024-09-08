@@ -366,6 +366,7 @@ def main_runner():
             )
             SELECT telegram_id, un.user_id as user_id, un.condition as condition, un.id as type
             FROM users.notification
+            JOIN un ON type = un.id
             WHERE type = un.id AND date <= un.time_interval
             ORDER BY date DESC
             LIMIT 1;
