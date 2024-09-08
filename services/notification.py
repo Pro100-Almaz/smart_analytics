@@ -1,3 +1,4 @@
+import json
 import os
 
 import requests
@@ -149,9 +150,9 @@ def last_impulse_notification():
                 try:
                     database.execute(
                         """
-                            INSERT INTO users.notification (type, date, text, status, active_name, telegram_id, percent, day_percent)
-                            VALUES (%s, current_timestamp, %s, %s, %s, %s, %s, %s);
-                        """, (user[2], response.text, response.ok, active_name, telegram_id, percent, day_percent)
+                            INSERT INTO users.notification (type, date, text, status, active_name, telegram_id, percent, day_percent, params)
+                            VALUES (%s, current_timestamp, %s, %s, %s, %s, %s, %s, %s);
+                        """, (user[2], response.text, response.ok, active_name, telegram_id, percent, day_percent, None)
                     )
                 except Exception as e:
                     print("Error arose while saving data into users.notification: ", e)
@@ -163,5 +164,42 @@ def ticker_tracking_notification(notify_list: dict):
     print("In last impulse notification!")
     database.connect()
 
-    for record in notify_list:
+    for ticker_name, record in notify_list.items():
+        telegram_ids = record.get("telegram_id")
 
+        telegram_text = f"🔔Торговая пара: {ticker_name}🔔/n"
+
+        if record.get('price_change', 0) > 0:
+            telegram_text += f"– Текущая цена: {record.get('current_price')}$ ({record.get('price_change')}% за 15 мин.)🟢\n"
+        else:
+            telegram_text += f"– Текущая цена: {record.get('current_price')}$ ({record.get('price_change')}% за 15 мин.)🔴\n"
+
+        if record.get('volume_change', 0) > 0:
+            telegram_text += f"– Текущая цена: {record.get('current_price')}$ ({record.get('price_change')}% за 15 мин.)🟢\n"
+        else:
+            telegram_text += f"– Текущий объём торгов: {record.get('current_volume')}$ ({record.get('volume_change')}% за 15 мин.)🔴\n"
+
+        telegram_text += f"– Актив входит в ТОП {record.get('top_place')} по суточной процентности🔝\n"
+
+        telegram_text += f" – Ставка финансирования: {record.get('current_funding_rate')}% | 15 мин. назад: {record.get('funding_rate_change')}%"
+
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": None,
+            "text": telegram_text
+        }
+
+        for telegram_id in telegram_ids:
+            payload["chat_id"] = telegram_id
+
+            response = requests.post(url, json=payload)
+
+            try:
+                database.execute(
+                    """
+                        INSERT INTO users.notification (type, date, text, status, active_name, telegram_id, percent, day_percent, params)
+                        VALUES (%s, current_timestamp, %s, %s, %s, %s, %s, %s, %s);
+                    """, (record.get('type'), response.text, response.ok, ticker_name, telegram_id, None, None, json.dumps(record))
+                )
+            except Exception as e:
+                print("Error arose while saving data into users.notification: ", e)
