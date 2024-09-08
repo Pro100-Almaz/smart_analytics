@@ -1,3 +1,6 @@
+import requests
+import statistics
+
 from datetime import datetime
 from typing import Dict
 
@@ -13,6 +16,31 @@ from .schemas import TickerTracking
 load_dotenv()
 router = APIRouter()
 
+
+def get_symbols():
+    main_data = requests.get('https://fapi.binance.com/fapi/v1/ticker/24hr').json()
+
+    for ticker in main_data:
+        if 'closeTime' in ticker and ticker['closeTime'] is not None:
+            try:
+                ticker['openPositionDay'] = datetime.fromtimestamp(ticker['closeTime'] / 1000).strftime(
+                    '%d-%m-%Y | %H')
+            except (ValueError, TypeError) as e:
+                print(f"Error processing closeTime: {e}")
+                ticker['openPositionDay'] = None
+        else:
+            print("closeTime not found or invalid in ticker")
+            ticker['openPositionDay'] = None
+
+    current_date = statistics.mode([ticker['openPositionDay'] for ticker in main_data])
+    not_usdt_symbols = [ticker['symbol'] for ticker in main_data if 'USDT' not in ticker['symbol']]
+    delete_symbols = [ticker['symbol'] for ticker in main_data if ticker['openPositionDay'] != current_date]
+    exchange_info_data = requests.get('https://fapi.binance.com/fapi/v1/exchangeInfo').json()['symbols']
+    not_perpetual_symbols = [info['symbol'] for info in exchange_info_data if info['contractType'] != 'PERPETUAL']
+    full_symbol_list_to_delete = set(not_usdt_symbols + delete_symbols + not_perpetual_symbols)
+    main_data = [ticker for ticker in main_data if ticker['symbol'] not in full_symbol_list_to_delete]
+    ticker_list = sorted([ticker['symbol'] for ticker in main_data])
+    return ticker_list
 
 
 @router.get("/get_ticker_tracking", tags=["notify"])
@@ -93,7 +121,7 @@ async def set_ticker_tracking(tt_params: TickerTracking, token_data: Dict = Depe
         """, token_data.get("user_id")
     )
 
-    condition = f"{tt_params.ticker_name}:{tt_params.time_period}_min"
+    condition = f"{tt_params.time_period}_min:{tt_params.ticker_name}"
 
     if not status_to_add[0].get("allowed_to_add"):
         return {"status": status.HTTP_403_FORBIDDEN, "message": "Ticker tracking not allowed!"}

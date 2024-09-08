@@ -157,3 +157,11 @@ def last_impulse_notification():
                     print("Error arose while saving data into users.notification: ", e)
 
     database.disconnect()
+
+
+def ticker_tracking_notification(notify_list: dict):
+    print("In last impulse notification!")
+    database.connect()
+
+    for record in notify_list:
+
