@@ -147,7 +147,7 @@ def main_runner():
         notify_list = {}
 
         for tt_user in tt_users:
-            ticker_name, time_interval = tt_user[2].split(":")
+            time_interval, ticker_name = tt_user[2].split(":")
             user_telegram_id = tt_user[0]
 
             if not tt_user[0]:
@@ -162,11 +162,10 @@ def main_runner():
                 user_telegram_id = telegram_id[0][0]
 
             if ticker_name not in notify_list.keys():
-                if tt_user[0]:
-                    notify_list[ticker_name] = {
-                        'type': tt_user[3],
-                        'telegram_id': [user_telegram_id]
-                    }
+                notify_list[ticker_name] = {
+                    'type': tt_user[3],
+                    'telegram_id': [user_telegram_id]
+                }
             else:
                 notify_list[ticker_name]['telegram_id'].append(user_telegram_id)
 
