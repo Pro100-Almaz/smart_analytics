@@ -3,6 +3,8 @@ import logging
 import os
 import statistics
 import time
+import threading
+
 from datetime import datetime, timezone
 from decimal import Decimal
 from logging.handlers import RotatingFileHandler
@@ -27,6 +29,11 @@ handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+
+def run_threaded(job_func):
+    job_thread = threading.Thread(target=job_func)
+    job_thread.start()
 
 except_list = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "BTCDOMUSDT"]
 
@@ -463,7 +470,7 @@ def main_runner():
     database.disconnect()
 
 
-schedule.every(60).seconds.do(main_runner)
+schedule.every(60).seconds.do(run_threaded, main_runner)
 
 while True:
     schedule.run_pending()
