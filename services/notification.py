@@ -167,7 +167,7 @@ def ticker_tracking_notification(notify_list: dict):
     for ticker_name, record in notify_list.items():
         telegram_ids = record.get("telegram_id")
 
-        telegram_text = f"🔔Торговая пара: {ticker_name}🔔/n"
+        telegram_text = f"🔔Торговая пара: {ticker_name}🔔\n"
 
         if record.get('price_change', 0) > 0:
             telegram_text += f"– Текущая цена: {record.get('current_price')}$ ({record.get('price_change')}% за 15 мин.)🟢\n"
@@ -175,7 +175,7 @@ def ticker_tracking_notification(notify_list: dict):
             telegram_text += f"– Текущая цена: {record.get('current_price')}$ ({record.get('price_change')}% за 15 мин.)🔴\n"
 
         if record.get('volume_change', 0) > 0:
-            telegram_text += f"– Текущая цена: {record.get('current_price')}$ ({record.get('price_change')}% за 15 мин.)🟢\n"
+            telegram_text += f"– Текущая объём торгов: {record.get('current_price')}$ ({record.get('price_change')}% за 15 мин.)🟢\n"
         else:
             telegram_text += f"– Текущий объём торгов: {record.get('current_volume')}$ ({record.get('volume_change')}% за 15 мин.)🔴\n"
 
