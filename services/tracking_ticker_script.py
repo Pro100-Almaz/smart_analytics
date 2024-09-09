@@ -182,10 +182,10 @@ def main_runner():
                             FROM data_history.funding
                             WHERE symbol = %s
                         )
-                        SELECT last_price, quote_volume
-                        FROM data_history.volume_data
-                        WHERE stock_id = fd.stock_id
-                        ORDER BY open_time DESC
+                        SELECT vd.last_price, vd.quote_volume
+                        FROM data_history.volume_data vd
+                        JOIN fd ON vd.stock_id = fd.stock_id
+                        ORDER BY vd.open_time DESC
                         LIMIT 1 OFFSET 14;
                     """, (symbol_value,)
                 )
@@ -211,10 +211,10 @@ def main_runner():
                             FROM data_history.funding
                             WHERE symbol = %s
                         )
-                        SELECT funding_rate
-                        FROM data_history.funding_data
-                        WHERE stock_id = fd.stock_id
-                        ORDER BY funding_time DESC
+                        SELECT vd.last_price, vd.quote_volume
+                        FROM data_history.funding_data vd
+                        JOIN fd ON vd.stock_id = fd.stock_id
+                        ORDER BY vd.open_time DESC
                         LIMIT 1 OFFSET 14;
                     """, (symbol_value,)
                 )
