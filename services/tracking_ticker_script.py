@@ -115,7 +115,7 @@ def main_runner():
 
         tt_users = database.execute_with_return(
             """
-                SELECT id, user_id, condition
+                SELECT user_id, condition, id
                 FROM users.user_notification
                 WHERE notification_type = 'ticker_tracking' AND active = true;
             """
@@ -136,7 +136,7 @@ def main_runner():
                     SELECT telegram_id
                     FROM un
                     WHERE (un.date <= NOW() - make_interval(mins := split_part(%s, '_', 1)::INTEGER));
-                """, (tt_user[0], tt_user[2])
+                """, (tt_user[2], tt_user[1])
             )
 
             if check_last_notification:
