@@ -134,6 +134,7 @@ def main_runner():
                         LIMIT 1
                     ) 
                     SELECT telegram_id
+                    FROM un
                     WHERE (un.date <= NOW() - make_interval(mins := split_part(%s, '_', 1)::INTEGER));
                 """, (tt_user[0], tt_user[2])
             )
