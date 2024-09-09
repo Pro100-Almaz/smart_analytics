@@ -29,26 +29,15 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
 
 
 @router.get("/get_impulse_history", tags=["notify"])
-async def get_impulse_history(token_data: Dict = Depends(JWTBearer())):
-    notifications_id = await database.fetch(
-        """
-        SELECT id
-        FROM users.user_notification
-        WHERE user_id = $1 AND notification_type = 'last_impulse' AND active = true
-        """, token_data.get("user_id")
-    )
-
-    notifications_merged = [not_id.get('id') for not_id in notifications_id]
-    placeholders = ','.join(f"${i + 1}" for i in range(len(notifications_merged)))
-
+async def get_impulse_history(impulse_id: int = Query(), token_data: Dict = Depends(JWTBearer())):
     impulses_history = await database.fetch(
         f"""
-        SELECT active_name, date, percent, day_percent
-        FROM users.notification
-        WHERE type IN ({placeholders})
-        ORDER BY date DESC 
-        LIMIT 10;
-        """, *notifications_merged
+            SELECT *
+            FROM users.notification
+            WHERE type = $1
+            ORDER BY date DESC 
+            LIMIT 10;
+            """, impulse_id
     )
 
     return {"status": status.HTTP_200_OK, "impulses_history": impulses_history}
