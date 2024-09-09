@@ -192,9 +192,9 @@ def main_runner():
 
                 notify_list[symbol_value].update({
                     'current_price': record.get('lastPrice', 0),
-                    'price_change': round((volume_data_15_min[0][0] * 100 / record.get('lastPrice', 1)) - 100, 2),
+                    'price_change': round((float(volume_data_15_min[0][0]) * 100 / float(record.get('lastPrice', 1))) - 100, 2),
                     'current_volume': record.get('quoteVolume', 0),
-                    'volume_change': round((volume_data_15_min[0][1] * 100 / record.get('quoteVolume', 1)) - 100, 2),
+                    'volume_change': round((float(volume_data_15_min[0][1]) * 100 / float(record.get('quoteVolume', 1))) - 100, 2),
                     'top_place': index+1
                 })
 
@@ -221,7 +221,7 @@ def main_runner():
 
                 notify_list[symbol_value].update({
                     'current_funding_rate': record.get('lastFundingRate', 0),
-                    'funding_rate_change': round((funding_data_15_min[0][0] * 100 / record.get('lastFundingRate', 1)) - 100, 2)
+                    'funding_rate_change': round((float(funding_data_15_min[0][0]) * 100 / float(record.get('lastFundingRate', 1))) - 100, 2)
                 })
 
         print("Third step of collecting notify list, the value is: ", notify_list)
