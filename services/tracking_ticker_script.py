@@ -115,16 +115,20 @@ def main_runner():
         tt_users = database.execute_with_return(
             """
                 WITH un AS (
-                    SELECT id, user_id, condition,
+                    SELECT id, user_id, condition, 
                            NOW() - make_interval(mins := split_part(condition, '_', 1)::INTEGER) AS time_interval
                     FROM users.user_notification
                     WHERE notification_type = 'ticker_tracking' AND active = true
                 )
-                SELECT telegram_id, un.user_id as user_id, un.condition as condition, un.id as type
-                FROM users.notification
-                JOIN un ON type = un.id
-                WHERE type = un.id AND date <= un.time_interval
-                ORDER BY date DESC
+                SELECT
+                    COALESCE(users.notification.telegram_id, NULL) AS telegram_id,
+                    un.user_id as user_id,
+                    un.condition as condition,
+                    un.id as type
+                FROM un
+                LEFT JOIN users.notification ON users.notification.type = un.id
+                WHERE (users.notification.date <= un.time_interval OR users.notification.date IS NULL)
+                ORDER BY users.notification.date DESC NULLS LAST
                 LIMIT 1;
             """
         )
@@ -144,11 +148,24 @@ def main_runner():
 
         for tt_user in tt_users:
             ticker_name, time_interval = tt_user[2].split(":")
+
+            if not tt_user[0]:
+                telegram_id = database.execute_with_return(
+                    """
+                        SELECT telegram_id
+                        FROM users.user
+                        WHERE user_id = %s;
+                    """, (tt_user[1],)
+                )
+
+                tt_user[0] = telegram_id[0][0]
+
             if ticker_name not in notify_list.keys():
-                notify_list[ticker_name] = {
-                    'type': tt_user[3],
-                    'telegram_id': [tt_user[1]]
-                }
+                if tt_user[0]:
+                    notify_list[ticker_name] = {
+                        'type': tt_user[3],
+                        'telegram_id': [tt_user[0]]
+                    }
             else:
                 notify_list[ticker_name]['telegram_id'].append(tt_user[1])
 
