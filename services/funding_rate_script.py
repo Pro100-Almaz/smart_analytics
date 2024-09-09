@@ -363,7 +363,7 @@ def get_funding_data():
 
 def main_runner():
     database.connect()
-    print("I am in main_runner script")
+    logger.info("I am in main_runner script")
     tt_users = database.execute_with_return(
         """
             WITH un AS (
