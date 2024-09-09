@@ -221,7 +221,7 @@ def main_runner():
 
                 notify_list[symbol_value].update({
                     'current_funding_rate': record.get('lastFundingRate', 0),
-                    'funding_rate_change': funding_data_15_min[0][0]
+                    'funding_rate_change': float(funding_data_15_min[0][0])
                 })
 
         print("Third step of collecting notify list, the value is: ", notify_list)
