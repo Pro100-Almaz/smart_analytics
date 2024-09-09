@@ -112,26 +112,36 @@ def main_runner():
     try:
         database.connect()
         logger.info("I am in main_runner script")
+
         tt_users = database.execute_with_return(
             """
-                WITH un AS (
-                    SELECT id, user_id, condition, 
-                           NOW() - make_interval(mins := split_part(condition, '_', 1)::INTEGER) AS time_interval
-                    FROM users.user_notification
-                    WHERE notification_type = 'ticker_tracking' AND active = true
-                )
-                SELECT
-                    COALESCE(users.notification.telegram_id, NULL) AS telegram_id,
-                    un.user_id as user_id,
-                    un.condition as condition,
-                    un.id as type
-                FROM un
-                LEFT JOIN users.notification ON users.notification.type = un.id
-                WHERE (users.notification.date <= un.time_interval OR users.notification.date IS NULL)
-                ORDER BY users.notification.date DESC NULLS LAST
-                LIMIT 1;
+                SELECT id, user_id, condition
+                FROM users.user_notification
+                WHERE notification_type = 'ticker_tracking' AND active = true;
             """
         )
+
+        to_notify_users = []
+
+        for tt_user in tt_users:
+            check_last_notification = database.execute_with_return(
+                """
+                    WITH un AS (
+                        SELECT *
+                        FROM users.notification
+                        WHERE type = %s
+                        ORDER BY users.notification.date DESC
+                        LIMIT 1
+                    ) 
+                    SELECT telegram_id
+                    WHERE (un.date <= NOW() - make_interval(mins := split_part(%s, '_', 1)::INTEGER));
+                """, (tt_user[0], tt_user[2])
+            )
+
+            if check_last_notification:
+                to_notify_users.append(tt_user + check_last_notification[0])
+
+        tt_users = to_notify_users
 
         print("ticker tracking listed users: ", tt_users)
 
