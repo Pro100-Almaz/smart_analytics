@@ -148,6 +148,7 @@ def main_runner():
 
         for tt_user in tt_users:
             ticker_name, time_interval = tt_user[2].split(":")
+            user_telegram_id = tt_user[0]
 
             if not tt_user[0]:
                 telegram_id = database.execute_with_return(
@@ -158,16 +159,16 @@ def main_runner():
                     """, (tt_user[1],)
                 )
 
-                tt_user[0] = telegram_id[0][0]
+                user_telegram_id = telegram_id[0][0]
 
             if ticker_name not in notify_list.keys():
                 if tt_user[0]:
                     notify_list[ticker_name] = {
                         'type': tt_user[3],
-                        'telegram_id': [tt_user[0]]
+                        'telegram_id': [user_telegram_id]
                     }
             else:
-                notify_list[ticker_name]['telegram_id'].append(tt_user[1])
+                notify_list[ticker_name]['telegram_id'].append(user_telegram_id)
 
         print("First step of collecting notify list, the value is: ", notify_list)
 
