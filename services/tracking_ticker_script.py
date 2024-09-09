@@ -140,7 +140,7 @@ def main_runner():
             )
 
             if check_last_notification:
-                to_notify_users.append(tt_user + check_last_notification[0])
+                to_notify_users.append(check_last_notification[0]+tt_user)
 
         tt_users = to_notify_users
 
