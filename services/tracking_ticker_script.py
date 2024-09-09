@@ -1,12 +1,9 @@
-import json
 import logging
 import os
 import statistics
 import time
-import threading
 
-from datetime import datetime, timezone
-from decimal import Decimal
+from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
 import requests
@@ -30,10 +27,6 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-
-def run_threaded(job_func):
-    job_thread = threading.Thread(target=job_func)
-    job_thread.start()
 
 except_list = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "BTCDOMUSDT"]
 
