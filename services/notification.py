@@ -45,7 +45,6 @@ def last_impulse_notification():
     )
 
     for user in users:
-        print(user)
         user_interval, user_percent = user[1].split(":")
         user_percent = float(user_percent)
 
@@ -59,8 +58,6 @@ def last_impulse_notification():
             except Exception as e:
                 continue
 
-            print("Min/max values is equal to: ", min_diff, max_diff)
-
             if temp_data and (min_diff or max_diff):
                 telegram_id = database.execute_with_return(
                     """
@@ -72,8 +69,6 @@ def last_impulse_notification():
 
                 active_name = (data_active.split(":"))[-1]
                 telegram_id = telegram_id[0][0]
-
-                print(f"Active name: {active_name}, The receiver telegram id is: {telegram_id}")
 
                 is_it_sent = database.execute_with_return(
                     """
@@ -90,8 +85,6 @@ def last_impulse_notification():
                         LIMIT 1;
                     """, (active_name, telegram_id)
                 )
-
-                print("Checking the status of sent active: ", is_it_sent)
 
                 if is_it_sent and is_it_sent[0][2]:
                     continue
@@ -121,8 +114,6 @@ def last_impulse_notification():
                     "text": text_for_notification
                 }
 
-                print("Before making telegram bot request, payload is: ", payload)
-
                 response = requests.post(url, json=payload)
                 try:
                     day_before_price = database.execute_with_return(
@@ -139,7 +130,6 @@ def last_impulse_notification():
                     print("Error arose while making query of day_before_price: ", e)
                     continue
 
-                print("Making the notification, response status: ", response.text)
                 current_price = temp_data.get('values', [])[-1]
 
                 if day_before_price:
