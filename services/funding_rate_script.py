@@ -102,7 +102,7 @@ def get_volume_data():
                 )
 
                 if quote_volume_5m:
-                    record['5_min_value'] = float(quote_volume_5m[0][0])
+                    record['5_min_value'] = format_number(float(quote_volume_5m[0][0]))
 
                 record['quoteVolume'] = format_number(record['quoteVolume'])
 
