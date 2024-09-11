@@ -93,7 +93,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
 
     condition = f"{impulse_params.interval}_min:{impulse_params.percentage}"
 
-    if status_to_add[0].get("allowed_to_add"):
+    if not status_to_add or status_to_add[0].get("allowed_to_add"):
         try:
             await database.execute(
                 """
