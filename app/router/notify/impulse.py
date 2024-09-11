@@ -25,7 +25,10 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
         """, token_data.get("user_id")
     )
 
-    return {"status": status.HTTP_200_OK, "impulses": impulses}
+    condition = impulses.pop("condition").split(":")
+    condition = {"time": condition[0].split("_")[0], "percent": condition[1]}
+
+    return {"status": status.HTTP_200_OK, "impulses": impulses, "condition": condition}
 
 
 @router.get("/get_impulse_history", tags=["notify"])
