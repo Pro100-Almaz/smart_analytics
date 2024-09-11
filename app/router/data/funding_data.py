@@ -1,14 +1,11 @@
 from datetime import datetime
 from typing import Dict
 
-import os
 import csv
 from dotenv import load_dotenv
-import pandas as pd
-import psycopg2
 import requests
 
-from fastapi import APIRouter, HTTPException, status, Depends, Query
+from fastapi import APIRouter, HTTPException, status, Depends, Query, BackgroundTasks
 
 from app.database import database
 from app.auth_bearer import JWTBearer
@@ -19,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/funding_data", tags=["data"])
-async def get_funding_data(interval: int = Query(7), token_data: Dict = Depends(JWTBearer())):
+async def get_funding_data(background_tasks: BackgroundTasks, interval: int = Query(7), token_data: Dict = Depends(JWTBearer())):
     funding_response = requests.get("https://fapi.binance.com/fapi/v1/premiumIndex")
     if funding_response.status_code == 200:
         user_id = token_data.get("user_id")

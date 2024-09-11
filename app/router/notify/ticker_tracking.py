@@ -53,7 +53,16 @@ async def get_ticker_tracking(token_data: Dict = Depends(JWTBearer())):
         """, token_data.get("user_id")
     )
 
-    return {"status": status.HTTP_200_OK, "records": records}
+    conditions = []
+    for record in records:
+        time, percent = record.get("condition").split(":")
+        conditions.append({
+            "id": record.get("id"),
+            "time": time.split("_")[0],
+            "percent": int(percent)
+        })
+
+    return {"status": status.HTTP_200_OK, "records": records, "conditions": conditions}
 
 
 @router.get("/get_ticker_tracking_history", tags=["notify"])
