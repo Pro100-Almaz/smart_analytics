@@ -55,11 +55,11 @@ async def get_ticker_tracking(token_data: Dict = Depends(JWTBearer())):
 
     conditions = []
     for record in records:
-        time, percent = record.get("condition").split(":")
+        time, ticker = record.get("condition").split(":")
         conditions.append({
             "id": record.get("id"),
             "time": time.split("_")[0],
-            "percent": int(percent)
+            "ticker": ticker
         })
 
     return {"status": status.HTTP_200_OK, "records": records, "conditions": conditions}
