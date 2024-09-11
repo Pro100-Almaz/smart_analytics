@@ -59,7 +59,7 @@ def get_volume_data():
 
         updated_volume_data = [d for d in volume_data if d['symbol'] not in except_list]
 
-        return sorted(updated_volume_data, key=lambda x: float(x['priceChangePercent']))
+        return sorted(updated_volume_data, key=lambda x: float(x['priceChangePercent']), reverse=True)
 
 
 def get_symbols():
