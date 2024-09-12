@@ -111,7 +111,6 @@ def get_funding_data():
 def main_runner():
     try:
         database.connect()
-        logger.info("I am in main_runner script")
 
         tt_users = database.execute_with_return(
             """
@@ -144,12 +143,10 @@ def main_runner():
 
         tt_users = to_notify_users
 
-        print("ticker tracking listed users: ", tt_users)
 
         funding_data = get_funding_data()
         volume_data = get_volume_data()
 
-        print("run the data collection!")
 
         if volume_data == "Error with DB":
             logging.error("Error with DB")
@@ -180,7 +177,6 @@ def main_runner():
             else:
                 notify_list[ticker_name]['telegram_id'].append(user_telegram_id)
 
-        print("First step of collecting notify list, the value is: ", notify_list)
 
         for index, record in enumerate(volume_data):
             if record.get('symbol', None) in notify_list.keys():
@@ -209,8 +205,6 @@ def main_runner():
                     'top_place': index+1
                 })
 
-        print("Second step of collecting notify list, the value is: ", notify_list)
-
         for index, record in enumerate(funding_data):
             if record.get('symbol', None) in notify_list.keys():
                 symbol_value = record.get('symbol')
@@ -234,8 +228,6 @@ def main_runner():
                     'current_funding_rate': record.get('lastFundingRate', 0),
                     'funding_rate_change': float(funding_data_15_min[0][0])
                 })
-
-        print("Third step of collecting notify list, the value is: ", notify_list)
 
         if notify_list:
             try:

@@ -1,17 +1,12 @@
 import os
-import pika
-import json
 
-import requests
 from dotenv import load_dotenv
 
-from celery import shared_task
 from celery_app import app
-from celery.signals import worker_process_init, worker_shutdown
 import pickle
 from collections import deque
 
-from database import database, redis_database as redis_client
+from database import redis_database as redis_client
 
 load_dotenv()
 
@@ -56,9 +51,8 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 #     # Close the connection
 #     connection.close()
 
-@app.task
+@app.task(ignore_result=True)
 def push_stock_data(stock_symbol, new_data: float):
-    print(f"THE VALUE ACCEPTED IS: {stock_symbol} , {new_data}")
     stock_key = f"{SHARED_DICT_KEY}:{stock_symbol}"
 
     if not redis_client.exists(stock_key):
