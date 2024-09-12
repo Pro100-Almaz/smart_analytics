@@ -53,7 +53,16 @@ async def get_ticker_tracking(token_data: Dict = Depends(JWTBearer())):
         """, token_data.get("user_id")
     )
 
-    return {"status": status.HTTP_200_OK, "records": records}
+    conditions = []
+    for record in records:
+        time, ticker = record.get("condition").split(":")
+        conditions.append({
+            "id": record.get("id"),
+            "time": time.split("_")[0],
+            "ticker": ticker
+        })
+
+    return {"status": status.HTTP_200_OK, "records": records, "conditions": conditions}
 
 
 @router.get("/get_ticker_tracking_history", tags=["notify"])
@@ -119,7 +128,7 @@ async def set_ticker_tracking(tt_params: TickerTracking, token_data: Dict = Depe
         await database.execute(
             """
             INSERT INTO users.user_notification (user_id, notification_type, notify_time, condition, created) 
-            VALUES ($1, 'last_impulse', NULL, $2, $3)
+            VALUES ($1, 'ticker_tracking', NULL, $2, $3)
             """, token_data.get("user_id"), condition, datetime.now()
         )
     except Exception as e:

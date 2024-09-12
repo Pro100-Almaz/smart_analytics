@@ -79,7 +79,7 @@ async def get():
 
 
 @router.websocket("/top_5_fundings/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int):
+async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     print(manager.active_connections)
     try:

@@ -25,11 +25,20 @@ async def get_impulse(token_data: Dict = Depends(JWTBearer())):
         """, token_data.get("user_id")
     )
 
-    return {"status": status.HTTP_200_OK, "impulses": impulses}
+    conditions = []
+    for impulse in impulses:
+        time, percent = impulse.get("condition").split(":")
+        conditions.append({
+            "id": impulse.get("id"),
+            "time": time.split("_")[0],
+            "percent": int(percent)
+        })
+
+    return {"status": status.HTTP_200_OK, "impulses": impulses, "conditions": conditions}
 
 
-@router.get("/get_impulse_history", tags=["notify"])
-async def get_impulse_history(impulse_id: int = Query(), token_data: Dict = Depends(JWTBearer())):
+@router.get("/get_impulse_history", tags=["notify"], dependencies=[Depends(JWTBearer())])
+async def get_impulse_history(impulse_id: int = Query()):
     impulses_history = await database.fetch(
         f"""
             SELECT *
@@ -84,7 +93,7 @@ async def set_impulse(impulse_params: Impulse, token_data: Dict = Depends(JWTBea
 
     condition = f"{impulse_params.interval}_min:{impulse_params.percentage}"
 
-    if status_to_add[0].get("allowed_to_add"):
+    if not status_to_add or status_to_add[0].get("allowed_to_add"):
         try:
             await database.execute(
                 """

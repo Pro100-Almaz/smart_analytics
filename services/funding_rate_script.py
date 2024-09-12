@@ -32,6 +32,13 @@ logger.addHandler(handler)
 except_list = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "BTCDOMUSDT"]
 
 
+def format_number(number):
+    integer_part, fractional_part = str(number).split('.')
+    formatted_integer = '{:,}'.format(int(integer_part))
+    formatted_number = f"{formatted_integer}.{fractional_part}"
+    return formatted_number
+
+
 def get_volume_data():
     main_data = requests.get('https://fapi.binance.com/fapi/v1/ticker/24hr')
 
@@ -95,7 +102,9 @@ def get_volume_data():
                 )
 
                 if quote_volume_5m:
-                    record['5_min_value'] = float(quote_volume_5m[0][0])
+                    record['5_min_value'] = format_number(round(float(quote_volume_5m[0][0]), 2))
+
+                record['quoteVolume'] = format_number(round(float(record['quoteVolume']), 2))
 
 
             redis_data = {
