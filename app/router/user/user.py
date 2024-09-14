@@ -54,7 +54,6 @@ async def login_user(telegram_data: Authorization):
         )
 
     user_tg_data = json.loads(user_tg_data)
-
     user_data = await database.fetchrow(
         """
         UPDATE users.user
@@ -63,6 +62,13 @@ async def login_user(telegram_data: Authorization):
         RETURNING user_id
         """, user_tg_data.get("id"), user_tg_data.get("username")
     )
+    # user_data = await database.fetchrow(
+    #     """
+    #     SELECT user_id
+    #     FROM users."user"
+    #     WHERE telegram_id = $1
+    #     """, user_tg_data.get("id")
+    # )
 
     user_id = int(user_data.get('user_id'))
 
