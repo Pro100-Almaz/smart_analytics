@@ -149,14 +149,14 @@ def get_volume_data():
                     """, (stock_id,)
                 )
 
-                if records_count[0][0] >= 43200:
+                if records_count[0][0] >= 44640:
                     database.execute("""
                                         DELETE FROM data_history.volume_data
                                         WHERE stock_id = (
                                             SELECT stock_id FROM data_history.volume_data
                                             WHERE stock_id = %s
                                             ORDER BY open_time ASC
-                                            LIMIT 1
+                                            LIMIT 1440
                                         );
                         """, (stock_id,))
 
@@ -335,14 +335,14 @@ def get_funding_data():
                     """, (stock_id,)
                 )
 
-                if records_count[0][0] >= 43200:
+                if records_count[0][0] >= 44640:
                     database.execute("""
                                 DELETE FROM data_history.funding_data
                                 WHERE stock_id = (
                                     SELECT stock_id FROM data_history.funding_data
                                     WHERE stock_id = %s
                                     ORDER BY funding_time ASC
-                                    LIMIT 1
+                                    LIMIT 1440
                                 );
                             """, (stock_id,))
 

@@ -46,15 +46,19 @@ async def get_funding_data(background_tasks: BackgroundTasks, interval: int = Qu
         funding_data = funding_response.json()
 
         for record in funding_data:
-            if float(record['lastFundingRate']) > 0.01:
+            record['lastFundingRate'] = float(record['lastFundingRate']) * 100
+
+            if record['lastFundingRate'] > 0.01:
                 positive_funding_rate_quantity += 1
                 return_value['positive'][0] += 1
-            elif float(record['lastFundingRate']) != 0.005 and float(record['lastFundingRate']) < 0.01:
-                negative_funding_rate_quantity += 1
-                return_value['negative'][0] += 1
-            elif float(record['lastFundingRate']) == 0.01 or float(record['lastFundingRate']) == 0.05:
+
+            if record['lastFundingRate'] == 0.01 or record['lastFundingRate'] == 0.05:
                 neutral_funding_rate_quantity += 1
                 return_value['neutral'][0] += 1
+
+            if record['lastFundingRate'] != 0.005 and record['lastFundingRate'] < 0.01:
+                negative_funding_rate_quantity += 1
+                return_value['negative'][0] += 1
 
             stock_id = await database.fetchrow(
                 """
@@ -89,6 +93,8 @@ async def get_funding_data(background_tasks: BackgroundTasks, interval: int = Qu
             )
 
             for data in stock_data:
+                print("Data from history: ", data)
+
                 if data.get("rn") not in return_value['time_interval']:
                     return_value['time_interval'].append(data.get("rn"))
                     return_value['positive'].append(0)
@@ -97,7 +103,7 @@ async def get_funding_data(background_tasks: BackgroundTasks, interval: int = Qu
 
                 if data.get('funding_rate') > 0.01:
                     return_value['positive'][-1] += 1
-                if 0.005 != data.get('funding_rate') < 0.01:
+                if data.get('funding_rate') != 0.005 or data.get('funding_rate') < 0.01:
                     return_value['negative'][-1] += 1
                 if data.get('funding_rate') == 0.01 or data.get('funding_rate') == 0.05:
                     return_value['neutral'][-1] += 1
