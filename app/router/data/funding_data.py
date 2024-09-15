@@ -93,8 +93,6 @@ async def get_funding_data(background_tasks: BackgroundTasks, interval: int = Qu
             )
 
             for data in stock_data:
-                print("Data from history: ", data)
-
                 if data.get("rn") not in return_value['time_interval']:
                     return_value['time_interval'].append(data.get("rn"))
                     return_value['positive'].append(0)
