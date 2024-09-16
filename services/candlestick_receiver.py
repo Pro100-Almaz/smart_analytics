@@ -110,7 +110,7 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
                             last_value = float(active_data.get('data', {}).get('k', {}).get('c'))
 
                             if active_name in checker_list:
-                                logger.info(f"Time given in websocket: {current_time}, last value: {last_value}")
+                                logger.info(f"Time given in websocket: {current_time}, last value: {last_value}, active name: {active_name}")
 
                             if phase_minute != current_time:
                                 phase_minute = current_time
