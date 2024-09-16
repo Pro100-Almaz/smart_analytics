@@ -39,7 +39,12 @@ Smart Analytics — это ваш персональный помощник в �
         'bot.client_welcome_text': {
             'ru': "🎉Привет, {user_nickname}! ",
             'en': " 🎉Hello, {user_nickname}! "
-        }
+        },
+        'bot.confirmation_text': {
+            'ru': "Пожалуйста, подождите, пока наш администратор разрешит вам проверить наш продукт!",
+            'kk': "",
+            'en': "Please wait until our admin will allow you to check our product!",
+        },
     }
 
     def get_string(self, key, lang = 'en') -> str:

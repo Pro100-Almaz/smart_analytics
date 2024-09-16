@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, Query
+from http.client import HTTPException
+
+from fastapi import APIRouter, Depends, Query, Request
 from typing import Dict
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -29,24 +31,33 @@ class Update(BaseModel):
 
 
 @router.post("", tags=["telegram_bot"])
-async def webhook(update: Update):
-    if not update.message.get("text", None):
+async def webhook(tg_request: Request):
+    update = await tg_request.json()
+    print(update)
+
+    if update.get('message', None):
+        message = update['message']
+    else:
         return {"Status": "ok"}
 
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
 
-    telegram_id = update.message.get("from").get("id")
-    username = update.message.get("from").get("username", None)
-    language_code = update.message.get("from").get("language_code", "en")
-    first_name = update.message.get("from").get("first_name", None)
-    last_name = update.message.get("from").get("last_name", None)
-    is_tg_premium = update.message.get("from").get("is_premium", False)
+    telegram_id = message.get("from").get("id")
+
+    if telegram_id not in [1171545762, 972366203, 737271228, 588330621, 708964298]:
+        return {"Status": "ok"}
+
+    username = message.get("from").get("username", None)
+    language_code = message.get("from").get("language_code", "en")
+    first_name = message.get("from").get("first_name", None)
+    last_name = message.get("from").get("last_name", None)
+    is_tg_premium = message.get("from").get("is_premium", False)
     new_referral_link = "https://t.me/practically_bot?start=refId" + str(telegram_id)
 
     bot_return_text = i18n.get_string('bot.default_text', 'en')
     process_status = "success"
 
-    if update.message.get("text").startswith("/start refId"):
+    if message.get("text").startswith("/start refId"):
 
         user_id = await database.fetchrow(
             """
@@ -119,11 +130,11 @@ async def webhook(update: Update):
                 bot_return_text = i18n.get_string('bot.error_message', language_code)
                 process_status = "error"
 
-    elif update.message.get("text").startswith("/help"):
+    elif message.get("text").startswith("/help"):
         bot_return_text = i18n.get_string('bot.help_message', 'en')
         process_status = "help"
 
-    elif update.message.get("text").startswith("/start"):
+    elif message.get("text").startswith("/start"):
         user_id = await database.fetchrow(
             """
             SELECT user_id
@@ -168,9 +179,11 @@ async def webhook(update: Update):
                 bot_return_text = i18n.get_string('bot.error_message', language_code)
                 process_status = "error"
 
+    else:
+        pass
 
     payload = {
-        "chat_id": update.message.get('from').get('id'),
+        "chat_id": message.get('from').get('id'),
         "text": bot_return_text
     }
 
@@ -184,7 +197,7 @@ async def webhook(update: Update):
 
         payload["reply_markup"] = reply_markup
 
-    response = requests.post(url, json=payload)
+    requests.post(url, json=payload)
 
     return {"Status": "ok"}
 
@@ -238,11 +251,10 @@ async def download_growth(file_id: int = Query(), token_data: Dict = Depends(JWT
 #         if response.status_code != 200:
 #             raise HTTPException(status_code=response.status_code, detail="Failed to set webhook")
 #         print(f"Webhook set: {WEBHOOK_URL}")
-#         logger.info("Webhook set!")
 #     else:
 #         print("Production server!")
-
-
+#
+#
 # @router.on_event("shutdown")
 # async def on_shutdown():
 #     if DEBUG:
@@ -250,4 +262,3 @@ async def download_growth(file_id: int = Query(), token_data: Dict = Depends(JWT
 #         response = requests.post(url)
 #         if response.status_code != 200:
 #             raise HTTPException(status_code=response.status_code, detail="Failed to delete webhook")
-#         logger.info("Webhook dropped!")
