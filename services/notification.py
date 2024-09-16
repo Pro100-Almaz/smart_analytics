@@ -14,7 +14,6 @@ SHARED_DICT_KEY = "binance:ticker:data"
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
 def last_impulse_notification():
-    print("In last impulse notification!")
     database.connect()
 
     prefix = "binance:ticker:data:"

@@ -1,4 +1,6 @@
+import os
 import logging
+from logging.handlers import RotatingFileHandler
 import json
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
@@ -6,8 +8,24 @@ from decimal import Decimal
 from database import database, redis_database
 
 
+log_directory = "logs"
+log_filename = "notification.log"
+log_file_path = os.path.join(log_directory, log_filename)
+
+if not os.path.exists(log_directory):
+    os.makedirs(log_directory)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
+
+handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+
 def save_websocket_data(websocket_data: dict):
-    print("I am at websocket saving function")
+    logger.info("Saving websocket data, active name: ", websocket_data.get('s', "No data"))
     database.connect()
     try:
         stock_id = database.execute_with_return(
@@ -25,7 +43,7 @@ def save_websocket_data(websocket_data: dict):
             """, (websocket_data.get('s'), "crypto", websocket_data.get('s'))
         )
     except Exception as e:
-        print(e)
+        logger.error("Error in query for selecting stock id of active, message: ", e)
         return "Error with DB"
 
     stock_id = stock_id[0][0]
@@ -40,14 +58,14 @@ def save_websocket_data(websocket_data: dict):
             """, (stock_id,)
         )
 
-        if records_count[0][0] >= 86400:
+        if records_count[0][0] >= 87840:
             database.execute("""
                                 DELETE FROM data_history.kline_1
                                 WHERE stock_id = (
                                     SELECT stock_id FROM data_history.volume_data
                                     WHERE stock_id = %s
                                     ORDER BY open_time ASC
-                                    LIMIT 1
+                                    LIMIT 1440
                                 );
                 """, (stock_id,))
 
@@ -63,7 +81,7 @@ def save_websocket_data(websocket_data: dict):
                   Decimal(websocket_data.get('v')), Decimal(websocket_data.get('q')), Decimal(websocket_data.get('V')))
         )
     except Exception as e:
-        print(e)
+        logger.error("Error in record saving query, message is: ", e)
         return "Error with DB"
 
     database.disconnect()

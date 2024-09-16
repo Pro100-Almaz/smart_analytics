@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timezone, timedelta
 import logging
+from logging.handlers import RotatingFileHandler
 import requests
 import asyncio
 import aiohttp
@@ -13,8 +14,20 @@ from notification import last_impulse_notification
 from utils import save_websocket_data
 
 
-logging.basicConfig(filename='app.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+log_directory = "logs"
+log_filename = "candlestick_receiver.log"
+log_file_path = os.path.join(log_directory, log_filename)
+
+if not os.path.exists(log_directory):
+    os.makedirs(log_directory)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
+
+handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 load_dotenv()
 
@@ -76,6 +89,9 @@ def get_chunk_of_data(l, n):
         yield l[i:i + n]
 
 
+checker_list = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "TONUSDT", "BNBUSDT"]
+
+
 async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
     asset_streams = [f"{str(asset).lower()}@kline_1m" for asset in chunk_of_assets]
     uri = f"wss://fstream.binance.com/stream?streams={'/'.join(asset_streams)}"
@@ -92,6 +108,9 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
                             current_time = unix_to_date(active_data.get('data', {}).get('k', {}).get('T'))
                             active_name = active_data.get('data', {}).get('s')
                             last_value = float(active_data.get('data', {}).get('k', {}).get('c'))
+
+                            if active_name in checker_list:
+                                logger.info(f"Time given in websocket: {current_time}, last value: {last_value}")
 
                             if phase_minute != current_time:
                                 phase_minute = current_time
