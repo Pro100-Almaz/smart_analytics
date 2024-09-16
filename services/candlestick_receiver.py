@@ -22,7 +22,7 @@ if not os.path.exists(log_directory):
     os.makedirs(log_directory)
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.DEBUG)
 
 handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
