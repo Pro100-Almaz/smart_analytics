@@ -25,7 +25,7 @@ logger.addHandler(handler)
 
 
 def save_websocket_data(websocket_data: dict):
-    logger.info("Saving websocket data, active name: ", websocket_data.get('s', "No data"))
+    logger.info("Saving websocket data, active name: ", websocket_data.get('s'))
     database.connect()
     try:
         stock_id = database.execute_with_return(
