@@ -125,6 +125,7 @@ def candlestick_receiver():
                 logger.error("Error while sending notification: ", e)
 
         logger.info(f"Ended {iteration_value} iteration!")
+        iteration_value += 1
 
 
 # schedule.every(5).seconds.do(main_runner)
