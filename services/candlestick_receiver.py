@@ -100,7 +100,7 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
 
     while True:
         try:
-            timeout = aiohttp.ClientTimeout(sock_read=10)
+            timeout = aiohttp.ClientTimeout(sock_read=5)
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.ws_connect(uri, proxy=proxy) as ws:
                     async for msg in ws:
@@ -146,7 +146,6 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
             print("Error: ", e)
 
         logger.error(f"Reconnecting to Binance using proxy {proxy}...")
-        await asyncio.sleep(10)
 
 
 # async def handle_exit(signum, frame):
