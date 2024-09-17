@@ -7,6 +7,7 @@ import asyncio
 import aiohttp
 import ssl
 import os
+import time
 
 from dotenv import load_dotenv
 from tasks import update_stock_data, push_stock_data
@@ -128,6 +129,9 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
                                 last_impulse_notification()
                             except Exception as e:
                                 print("Error while sending notification: ", e)
+
+                            if active_name in checker_list:
+                                logger.info("Process ended!")
 
                         elif msg.type == aiohttp.WSMsgType.PING:
                             await ws.pong(msg.data)
