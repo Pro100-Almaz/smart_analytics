@@ -134,11 +134,11 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
                                 save_websocket_data(active_data.get('data', {}).get('k', {}))
 
                             else:
-                                res = update_stock_data.delay(active_name, last_value)
+                                update_stock_data.delay(active_name, last_value)
 
-                                if res == "create_stock_key":
-                                    push_stock_data.delay(active_name, last_value)
-                                    save_websocket_data(active_data.get('data', {}).get('k', {}))
+                                # if res == "create_stock_key":
+                                #     push_stock_data.delay(active_name, last_value)
+                                #     save_websocket_data(active_data.get('data', {}).get('k', {}))
 
                             try:
                                 last_impulse_notification()
