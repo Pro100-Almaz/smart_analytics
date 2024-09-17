@@ -3,9 +3,6 @@ from time import sleep
 
 import requests
 import logging
-import json
-import time
-import schedule
 
 from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
@@ -99,8 +96,10 @@ def get_data():
 
 def candlestick_receiver():
     phase_minute = None
+    iteration_value = 1
 
     while True:
+        logger.info(f"Started {iteration_value} iteration!")
         data = get_data()
 
         for record in data:
@@ -126,6 +125,7 @@ def candlestick_receiver():
             except Exception as e:
                 logger.error("Error while sending notification: ", e)
 
+        logger.info(f"Ended {iteration_value} iteration!")
         sleep(5)
 
 
@@ -135,5 +135,6 @@ def candlestick_receiver():
 #     schedule.run_pending()
 #     time.sleep(1)
 
-candlestick_receiver()
+if "__main__" == __name__:
+    candlestick_receiver()
 
