@@ -95,7 +95,9 @@ checker_list = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "TONUSDT", "BNBUSDT"]
 
 async def get_assets_ohlc(proxy, chunk_of_assets, ssl_context=None):
     logger.info("The amount of assets in current thread is: %s", len(chunk_of_assets))
-    logger.info(f"The list of assets is: {chunk_of_assets}")
+    for asset in chunk_of_assets:
+        logger.info(f"Asset: {asset}")
+
     asset_streams = [f"{str(asset).lower()}@kline_1m" for asset in chunk_of_assets]
     uri = f"wss://fstream.binance.com/stream?streams={'/'.join(asset_streams)}"
     phase_minute = None
