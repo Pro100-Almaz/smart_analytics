@@ -100,7 +100,7 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
 
     while True:
         try:
-            timeout = aiohttp.ClientTimeout(sock_read=5)
+            timeout = aiohttp.ClientTimeout(sock_read=10)
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.ws_connect(uri, proxy=proxy) as ws:
                     async for msg in ws:
@@ -115,15 +115,30 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
 
                             if phase_minute != current_time:
                                 phase_minute = current_time
-                                push_stock_data.delay(active_name, last_value)
-                                save_websocket_data(active_data.get('data', {}).get('k', {}))
-
+                                await asyncio.gather(
+                                    push_stock_data.delay(active_name, last_value),
+                                    save_websocket_data(active_data.get('data', {}).get('k', {}))
+                                )
                             else:
-                                res = update_stock_data.delay(active_name, last_value)
+                                res = await update_stock_data.delay(active_name, last_value)
 
                                 if res == "create_stock_key":
-                                    push_stock_data.delay(active_name, last_value)
-                                    save_websocket_data(active_data.get('data', {}).get('k', {}))
+                                    await asyncio.gather(
+                                        push_stock_data.delay(active_name, last_value),
+                                        save_websocket_data(active_data.get('data', {}).get('k', {}))
+                                    )
+
+                            # if phase_minute != current_time:
+                            #     phase_minute = current_time
+                            #     push_stock_data.delay(active_name, last_value)
+                            #     save_websocket_data(active_data.get('data', {}).get('k', {}))
+                            #
+                            # else:
+                            #     res = update_stock_data.delay(active_name, last_value)
+                            #
+                            #     if res == "create_stock_key":
+                            #         push_stock_data.delay(active_name, last_value)
+                            #         save_websocket_data(active_data.get('data', {}).get('k', {}))
 
                             try:
                                 last_impulse_notification()
@@ -144,6 +159,7 @@ async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
         except Exception as e:
             logger.error(f"An error occurred while processing data, at proxy {proxy}: {e}")
             print("Error: ", e)
+            await asyncio.sleep(5)
 
         logger.error(f"Reconnecting to Binance using proxy {proxy}...")
 
