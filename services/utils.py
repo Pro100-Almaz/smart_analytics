@@ -86,3 +86,66 @@ def save_websocket_data(websocket_data: dict):
 
     database.disconnect()
 
+
+def save_http_data(http_data: dict):
+    logger.info("Saving websocket data, active name: %s", http_data.get('symbol'))
+    database.connect()
+    try:
+        stock_id = database.execute_with_return(
+            """
+                WITH ins AS (
+                    INSERT INTO data_history.funding (symbol, company_name)
+                    VALUES (%s, %s)
+                    ON CONFLICT (symbol) DO NOTHING
+                    RETURNING stock_id
+                )
+                SELECT stock_id FROM ins
+                UNION ALL
+                SELECT stock_id FROM data_history.funding
+                WHERE symbol = %s AND NOT EXISTS (SELECT 1 FROM ins)
+            """, (http_data.get('symbol'), "crypto", http_data.get('symbol'))
+        )
+    except Exception as e:
+        logger.error("Error in query for selecting stock id of active, message: ", e)
+        return "Error with DB"
+
+    stock_id = stock_id[0][0]
+
+    open_time = datetime.fromtimestamp(http_data.get('openTime') / 1000.0)
+    close_time = datetime.fromtimestamp(http_data.get('closeTime')  / 1000.0)
+
+    try:
+        records_count = database.execute_with_return(
+            """
+                SELECT COUNT(*) FROM data_history.kline_1 WHERE stock_id = %s;
+            """, (stock_id,)
+        )
+
+        if records_count[0][0] >= 87840:
+            database.execute("""
+                                DELETE FROM data_history.kline_1
+                                WHERE stock_id = (
+                                    SELECT stock_id FROM data_history.volume_data
+                                    WHERE stock_id = %s
+                                    ORDER BY open_time DESC
+                                    LIMIT 1440
+                                );
+                """, (stock_id,))
+
+            print(f"Deleted the oldest record with column value '{stock_id}'")
+
+        database.execute(
+            """
+                INSERT INTO data_history.kline_1 (stock_id, open_time, close_time, interval, open_price, close_price, 
+                highest_price, lowest_price, volume_token, volume_dollar, volume_market)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (stock_id, open_time, close_time, 1, Decimal(http_data.get('openPrice', 0)),
+                  Decimal(http_data.get('lastPrice')), Decimal(http_data.get('highPrice')), Decimal(http_data.get('lowPrice')),
+                  Decimal(0), Decimal(http_data.get('quoteVolume')), Decimal(0))
+        )
+    except Exception as e:
+        logger.error("Error in record saving query, message is: ", e)
+        return "Error with DB"
+
+    database.disconnect()
+
