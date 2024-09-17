@@ -97,7 +97,7 @@ async def get_funding_data(background_tasks: BackgroundTasks, interval: int = Qu
                     return_value['time_interval'].append(data.get("rn"))
                     return_value['positive'].append(0)
                     return_value['negative'].append(0)
-                    return_value['neutral'].append(0)
+                    return_value['neutral'].append(0)   
 
                 if data.get('funding_rate') > 0.01:
                     return_value['positive'][-1] += 1

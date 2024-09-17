@@ -87,7 +87,7 @@ def push_stock_data(stock_symbol, new_data: float):
         if interval_type == "1_min":
             if current_data.get("value"):
                 old_data = current_data.get("value", 0.001)
-                current_data["diff"] = [round((old_data * 100 / new_data) - 100, 2)]
+                current_data["diff"] = [round(100 - (old_data * 100 / new_data), 2)]
             else:
                 current_data["diff"] = [0]
 
@@ -103,8 +103,8 @@ def push_stock_data(stock_symbol, new_data: float):
                 # ]
 
                 current_data["diff"] = [
-                    round((current_data.get("min", 0) * 100 / new_data) - 100, 2),
-                    round((current_data.get("max", 0) * 100 / new_data) - 100, 2),
+                    round(100 - (current_data.get("min", 0) * 100 / new_data), 2),
+                    round(100 - (current_data.get("max", 0) * 100 / new_data), 2),
                 ]
 
             min_value = min(sliding_window)
@@ -136,7 +136,7 @@ def update_stock_data(stock_symbol, new_data: float):
         if interval_type == "1_min":
             if current_data.get("value"):
                 old_data = current_data.get("value", 0.001)
-                current_data["diff"] = [round((old_data * 100 / new_data) - 100, 2)]
+                current_data["diff"] = [round(100 - (old_data * 100 / new_data), 2)]
             else:
                 current_data["diff"] = [0]
         else:
@@ -148,8 +148,8 @@ def update_stock_data(stock_symbol, new_data: float):
             #     round(((new_data - current_data.get("max", 0)) / abs(current_data.get("max", 0)) * 100), 2)
             # ]
             current_data["diff"] = [
-                round((current_data.get("min", 0) * 100 / new_data) - 100, 2),
-                round((current_data.get("max", 0) * 100 / new_data) - 100, 2),
+                round(100 - (current_data.get("min", 0) * 100 / new_data), 2),
+                round(100 - (current_data.get("max", 0) * 100 / new_data), 2),
             ]
 
             min_value = min(sliding_window)
