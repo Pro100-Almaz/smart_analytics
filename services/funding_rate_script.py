@@ -22,7 +22,7 @@ if not os.path.exists(log_directory):
     os.makedirs(log_directory)
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.DEBUG)
 
 handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -96,7 +96,7 @@ def get_volume_data():
                     SELECT quote_volume
                     FROM data_history.volume_data
                     WHERE stock_id = %s
-                    ORDER BY open_time DESC
+                    ORDER BY close_time DESC
                     LIMIT 1 OFFSET 4;
                     """, (stock_id,)
                 )
@@ -155,7 +155,7 @@ def get_volume_data():
                                         WHERE stock_id = (
                                             SELECT stock_id FROM data_history.volume_data
                                             WHERE stock_id = %s
-                                            ORDER BY open_time ASC
+                                            ORDER BY close_time DESC
                                             LIMIT 1440
                                         );
                         """, (stock_id,))
@@ -341,7 +341,7 @@ def get_funding_data():
                                 WHERE stock_id = (
                                     SELECT stock_id FROM data_history.funding_data
                                     WHERE stock_id = %s
-                                    ORDER BY funding_time ASC
+                                    ORDER BY funding_time DESC
                                     LIMIT 1440
                                 );
                             """, (stock_id,))

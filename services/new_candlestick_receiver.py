@@ -1,19 +1,16 @@
 import json
 from datetime import datetime, timezone, timedelta
 import logging
-from logging.handlers import RotatingFileHandler
 import requests
-import asyncio
-import aiohttp
 import ssl
 import os
-import time
-
+import asyncio
+import multiprocessing
+from logging.handlers import RotatingFileHandler
+import aiohttp
 from dotenv import load_dotenv
 from tasks import update_stock_data, push_stock_data
-from notification import last_impulse_notification
 from utils import save_websocket_data
-
 
 log_directory = "logs"
 log_filename = "candlestick_receiver.log"
@@ -33,11 +30,13 @@ logger.addHandler(handler)
 load_dotenv()
 
 proxies_string = os.getenv('PROXIES')
-
 proxy_list = proxies_string.split(',')
+
+checker_list = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "TONUSDT", "BNBUSDT"]
 
 
 def get_symbols():
+    """Fetch the asset symbols from Binance."""
     main_data = requests.get('https://fapi.binance.com/fapi/v1/ticker/24hr').json()
     frequent_date = {}
     result_list = []
@@ -74,26 +73,21 @@ def get_symbols():
 
 
 def unix_to_date(unix):
+    """Convert Unix timestamp to readable date."""
     timestamp_in_seconds = unix / 1000
-
     utc_time = datetime.fromtimestamp(timestamp_in_seconds, tz=timezone.utc)
-
     adjusted_time = utc_time + timedelta(hours=5)
-
-    # Format the adjusted time
-    date = adjusted_time.strftime('%d-%m-%Y | %H:%M')
-    return date
+    return adjusted_time.strftime('%d-%m-%Y | %H:%M')
 
 
 def get_chunk_of_data(l, n):
+    """Divide the list into chunks."""
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
 
-checker_list = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "TONUSDT", "BNBUSDT"]
-
-
 async def get_assets_ohlc(proxy, chunk_of_assets):
+    """Handle WebSocket connection and processing of assets."""
     logger.info("The amount of assets in current thread is: %s", len(chunk_of_assets))
     for asset in chunk_of_assets:
         logger.info(f"Asset: {asset}")
@@ -104,8 +98,7 @@ async def get_assets_ohlc(proxy, chunk_of_assets):
 
     while True:
         try:
-            # timeout = aiohttp.ClientTimeout(sock_read=10)
-            async with aiohttp.ClientSession() as session: # aiohttp.ClientSession(timeout=timeout)
+            async with aiohttp.ClientSession() as session:
                 async with session.ws_connect(uri, proxy=proxy) as ws:
                     async for msg in ws:
                         if msg.type == aiohttp.WSMsgType.TEXT:
@@ -117,103 +110,51 @@ async def get_assets_ohlc(proxy, chunk_of_assets):
                             if active_name in checker_list:
                                 logger.info(f"Time given in websocket: {current_time}, last value: {last_value}, active name: {active_name}")
 
-                            # if phase_minute != current_time:
-                            #     phase_minute = current_time
-                            #     await asyncio.gather(
-                            #         push_stock_data.delay(active_name, last_value),
-                            #         save_websocket_data(active_data.get('data', {}).get('k', {}))
-                            #     )
-                            # else:
-                            #     update_stock_data.delay(active_name, last_value)
-
-                                # if res == "create_stock_key":
-                                #     await asyncio.gather(
-                                #         push_stock_data.delay(active_name, last_value),
-                                #         save_websocket_data(active_data.get('data', {}).get('k', {}))
-                                #     )
-
                             if phase_minute != current_time:
                                 phase_minute = current_time
                                 push_stock_data.delay(active_name, last_value)
                                 save_websocket_data(active_data.get('data', {}).get('k', {}))
-
                             else:
                                 update_stock_data.delay(active_name, last_value)
 
-                                # if res == "create_stock_key":
-                                #     push_stock_data.delay(active_name, last_value)
-                                #     save_websocket_data(active_data.get('data', {}).get('k', {}))
-
-                            try:
-                                last_impulse_notification()
-                            except Exception as e:
-                                print("Error while sending notification: ", e)
-
-                            if active_name in checker_list:
-                                logger.info("Process ended!")
-
                         elif msg.type == aiohttp.WSMsgType.PING:
                             await ws.pong(msg.data)
-                            logger.info("Ping received and pong sent")
                         elif msg.type == aiohttp.WSMsgType.PONG:
                             logger.info("Pong received")
                         elif msg.type in [aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR]:
-                            logger.error("WebSocket closed/error")
+                            logger.error("WebSocket closed or error")
                             break
         except Exception as e:
-            logger.error(f"An error occurred while processing data, at proxy {proxy}: {e}")
-            print("Error: ", e)
+            logger.error(f"An error occurred while processing data at proxy {proxy}: {e}")
             await asyncio.sleep(5)
 
         logger.error(f"Reconnecting to Binance using proxy {proxy}...")
 
 
-# async def handle_exit(signum, frame):
-#     await send_message('Script: get_asset_data\n'
-#                  'Text: Script is being stopped manually.')
-#     raise SystemExit
-#
-#
-# signal.signal(signal.SIGINT, handle_exit)
-# signal.signal(signal.SIGTERM, handle_exit)
+def run_websocket_process(proxy, chunk_of_assets):
+    """Run WebSocket connections for a chunk of assets in a separate process."""
+    asyncio.run(get_assets_ohlc(proxy, chunk_of_assets))
 
 
-async def update_symbols(queue):
-    while True:
-        logger.info("--> Updating symbols!")
-        symbols = get_symbols()
-        await queue.put(symbols)
-        await asyncio.sleep(86400)
+def main():
+    # Fetch all symbols
+    the_beginning_time = time.time()
+    symbols = get_symbols()
 
+    # Split symbols into 5 chunks
+    chunked_assets = list(get_chunk_of_data(symbols, len(symbols) // 5))
 
-async def dispatcher(queue, proxies):
-    while True:
-        assets = await queue.get()
-        chunk_of_assets = list(get_chunk_of_data(assets, len(assets) // len(proxies)))
+    # Start 5 separate processes for WebSocket tracking
+    processes = []
+    for i in range(5):
+        p = multiprocessing.Process(target=run_websocket_process, args=(proxy_list[i], chunked_assets[i]))
+        processes.append(p)
+        p.start()
 
-        tasks = [get_assets_ohlc(proxies[i], chunk_of_assets[i]) for i in range(len(proxies))]
-        await asyncio.gather(*tasks)
-
-
-async def main():
-    # directories = ["dataframes", "dataframes/raw_data"]
-    # for directory in directories:
-    #     os.makedirs(directory, exist_ok=True)
-
-    ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
-
-    queue = asyncio.Queue()
-
-    id_retrieving_symbols_function = asyncio.create_task(update_symbols(queue))
-    dispatcher_task = asyncio.create_task(dispatcher(queue, proxy_list))
-
-    await asyncio.gather(id_retrieving_symbols_function, dispatcher_task)
+    # Wait for all processes to complete
+    for p in processes:
+        p.join()
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        pass
+    main()
