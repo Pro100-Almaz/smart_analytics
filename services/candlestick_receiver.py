@@ -93,7 +93,8 @@ def get_chunk_of_data(l, n):
 checker_list = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "TONUSDT", "BNBUSDT"]
 
 
-async def get_assets_ohlc(proxy, chunk_of_assets, directory, ssl_context=None):
+async def get_assets_ohlc(proxy, chunk_of_assets, ssl_context=None):
+    logger.info("The amount of assets in current thread is: %s", len(chunk_of_assets))
     asset_streams = [f"{str(asset).lower()}@kline_1m" for asset in chunk_of_assets]
     uri = f"wss://fstream.binance.com/stream?streams={'/'.join(asset_streams)}"
     phase_minute = None
@@ -182,19 +183,19 @@ async def update_symbols(queue):
         await asyncio.sleep(86400)
 
 
-async def dispatcher(queue, proxies, directory):
+async def dispatcher(queue, proxies):
     while True:
         assets = await queue.get()
         chunk_of_assets = list(get_chunk_of_data(assets, len(assets) // len(proxies)))
 
-        tasks = [get_assets_ohlc(proxies[i], chunk_of_assets[i], directory) for i in range(len(proxies))]
+        tasks = [get_assets_ohlc(proxies[i], chunk_of_assets[i]) for i in range(len(proxies))]
         await asyncio.gather(*tasks)
 
 
 async def main():
-    directories = ["dataframes", "dataframes/raw_data"]
-    for directory in directories:
-        os.makedirs(directory, exist_ok=True)
+    # directories = ["dataframes", "dataframes/raw_data"]
+    # for directory in directories:
+    #     os.makedirs(directory, exist_ok=True)
 
     ssl_context = ssl.create_default_context()
     ssl_context.check_hostname = False
@@ -203,7 +204,7 @@ async def main():
     queue = asyncio.Queue()
 
     id_retrieving_symbols_function = asyncio.create_task(update_symbols(queue))
-    dispatcher_task = asyncio.create_task(dispatcher(queue, proxy_list, directories[1]))
+    dispatcher_task = asyncio.create_task(dispatcher(queue, proxy_list))
 
     await asyncio.gather(id_retrieving_symbols_function, dispatcher_task)
 
