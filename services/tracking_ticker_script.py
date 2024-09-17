@@ -55,9 +55,9 @@ def get_volume_data():
         exchange_info_data = requests.get('https://fapi.binance.com/fapi/v1/exchangeInfo').json()['symbols']
         not_perpetual_symbols = [info['symbol'] for info in exchange_info_data if info['contractType'] != 'PERPETUAL']
         full_symbol_list_to_delete = set(not_usdt_symbols + delete_symbols + not_perpetual_symbols)
-        volume_data = [ticker for ticker in main_data if ticker['symbol'] not in full_symbol_list_to_delete]
+        updated_volume_data = [ticker for ticker in main_data if ticker['symbol'] not in full_symbol_list_to_delete]
 
-        updated_volume_data = [d for d in volume_data if d['symbol'] not in except_list]
+        # updated_volume_data = [d for d in volume_data if d['symbol'] not in except_list]
 
         return sorted(updated_volume_data, key=lambda x: float(x['priceChangePercent']), reverse=True)
 
