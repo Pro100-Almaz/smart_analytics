@@ -103,7 +103,6 @@ def candlestick_receiver():
         data = get_data()
 
         for record in data:
-            print(record)
             current_time = unix_to_date(record.get('openTime'))
             active_name = record.get('symbol')
             last_value = float(record.get('lastPrice', {}))
