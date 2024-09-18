@@ -114,6 +114,7 @@ async def get_gradation_history(growth_type: str = Query("Volume", max_length=50
         SELECT date, time, file_name, file_id
         FROM data_history.growth_data_history
         WHERE user_id = $1 AND type = $2
+        ORDER BY date DESC
         LIMIT 10;
         """, token_data.get("user_id"), "volume" if growth_type == "Volume" else "price"
     )
