@@ -121,6 +121,7 @@ def main_runner():
         )
 
         to_notify_users = []
+        print("Step 1")
 
         for tt_user in tt_users:
             check_last_notification = database.execute_with_return(
@@ -150,6 +151,7 @@ def main_runner():
 
             if check_last_notification:
                 to_notify_users.append(check_last_notification[0]+tt_user)
+        print("Step 2")
 
         if not to_notify_users:
             database.disconnect()
@@ -165,6 +167,7 @@ def main_runner():
             return
 
         notify_list = {}
+        print("Step 3")
 
         for tt_user in tt_users:
             time_interval, ticker_name = tt_user[2].split(":")
@@ -188,6 +191,7 @@ def main_runner():
                 }
             else:
                 notify_list[ticker_name]['telegram_id'].append(user_telegram_id)
+        print("Step 4")
 
         for index, record in enumerate(volume_data):
             if record.get('symbol', None) in notify_list.keys():
@@ -215,6 +219,7 @@ def main_runner():
                     'volume_change': round((float(volume_data_15_min[0][1]) * 100 / float(record.get('quoteVolume', 1))) - 100, 2),
                     'top_place': index+1
                 })
+        print("Step 5")
 
         for index, record in enumerate(funding_data):
             if record.get('symbol', None) in notify_list.keys():
@@ -239,7 +244,7 @@ def main_runner():
                     'current_funding_rate': record.get('lastFundingRate', 0),
                     'funding_rate_change': float(funding_data_15_min[0][0])
                 })
-
+        print("Step 6")
         if notify_list:
             try:
                 ticker_tracking_notification(notify_list)
