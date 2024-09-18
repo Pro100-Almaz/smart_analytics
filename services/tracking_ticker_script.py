@@ -13,7 +13,7 @@ from database import database, redis_database
 from notification import ticker_tracking_notification
 
 log_directory = "logs"
-log_filename = "funding_rate.log"
+log_filename = "ticker_tracking.log"
 log_file_path = os.path.join(log_directory, log_filename)
 
 if not os.path.exists(log_directory):
@@ -22,8 +22,8 @@ if not os.path.exists(log_directory):
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
-handler = RotatingFileHandler(log_file_path, maxBytes=2000, backupCount=5)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler = RotatingFileHandler(log_file_path, maxBytes=200000, backupCount=5)
+formatter = logging.Formatter('[%(asctime)s] p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s','%m-%d %H:%M:%S')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
@@ -151,12 +151,14 @@ def main_runner():
             if check_last_notification:
                 to_notify_users.append(check_last_notification[0]+tt_user)
 
-        tt_users = to_notify_users
+        if not to_notify_users:
+            database.disconnect()
+            return
 
+        tt_users = to_notify_users
 
         funding_data = get_funding_data()
         volume_data = get_volume_data()
-
 
         if volume_data == "Error with DB":
             logging.error("Error with DB")
@@ -186,7 +188,6 @@ def main_runner():
                 }
             else:
                 notify_list[ticker_name]['telegram_id'].append(user_telegram_id)
-
 
         for index, record in enumerate(volume_data):
             if record.get('symbol', None) in notify_list.keys():
