@@ -146,7 +146,7 @@ def main_runner():
                                 WHERE user_id = %s
                             )
                         END;
-                """, (tt_user[2], tt_user[1])
+                """, (tt_user[2], tt_user[1], tt_user[0])
             )
 
             if check_last_notification:
