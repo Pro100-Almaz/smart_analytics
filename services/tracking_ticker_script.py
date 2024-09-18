@@ -121,7 +121,7 @@ def main_runner():
         )
 
         to_notify_users = []
-        print("Step 1")
+        print("Step 1, the value from tt users: ", tt_users)
 
         for tt_user in tt_users:
             check_last_notification = database.execute_with_return(
