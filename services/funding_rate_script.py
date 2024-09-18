@@ -168,10 +168,10 @@ def get_volume_data():
                         weighted_avg_price, last_price, last_qty, open_price, high_price, volume, quote_volume, 
                         open_time, close_time, first_id, last_id, count)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (stock_id, Decimal(record["priceChange"]), Decimal(record["priceChangePercent"]),
-                          Decimal(record["weightedAvgPrice"]), Decimal(record["lastPrice"]), Decimal(record["lastQty"]),
-                          Decimal(record["openPrice"]), Decimal(record["highPrice"]), Decimal(record["volume"]),
-                          Decimal(record["quoteVolume"]), open_time, close_time, record["firstId"], record["lastId"],
+                    """, (stock_id, float(record["priceChange"]), float(record["priceChangePercent"]),
+                          float(record["weightedAvgPrice"]), float(record["lastPrice"]), float(record["lastQty"]),
+                          float(record["openPrice"]), float(record["highPrice"]), float(record["volume"]),
+                          float(record["quoteVolume"]), open_time, close_time, record["firstId"], record["lastId"],
                           record["count"])
                 )
             except Exception as e:
