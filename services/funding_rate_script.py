@@ -104,7 +104,7 @@ def get_volume_data():
                 if quote_volume_5m:
                     record['5_min_value'] = format_number(round(float(quote_volume_5m[0][0]), 2))
 
-                record['quoteVolume'] = format_number(round(float(record['quoteVolume']), 2))
+                record['quoteVolumeFormatted'] = format_number(round(float(record['quoteVolume']), 2))
 
 
             redis_data = {
