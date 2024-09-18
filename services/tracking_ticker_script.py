@@ -161,7 +161,7 @@ def main_runner():
         volume_data = get_volume_data()
 
         if volume_data == "Error with DB":
-            logging.error("Error with DB")
+            logger.error("Error with DB")
             return
 
         notify_list = {}
@@ -246,7 +246,7 @@ def main_runner():
             except Exception as e:
                 print("Exception occurred in ticker tracking notification, error message: ", e)
     except Exception as e:
-        logging.error(f"Error in main_runner: {e}")
+        logger.error(f"Error in main_runner: {e}")
     finally:
         database.disconnect()
 
