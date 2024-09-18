@@ -101,6 +101,17 @@ async def delete_ticker_tracking(tt_id: int = Query(None), token_data: Dict = De
 
 @router.post("/set_ticker_tracking", tags=["notify"])
 async def set_ticker_tracking(tt_params: TickerTracking, token_data: Dict = Depends(JWTBearer())):
+    ticker_name = await database.fetchrow(
+        """
+        SELECT *
+        FROM data_history.funding
+        WHERE symbol = $1;
+        """, tt_params.ticker_name
+    )
+
+    if not ticker_name:
+        return {"status": status.HTTP_400_BAD_REQUEST, "message": "Ticker tracking not found!"}
+
     status_to_add = await database.fetch(
         """
             WITH notification_count AS (
