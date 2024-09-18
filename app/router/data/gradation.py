@@ -1,5 +1,7 @@
 import os
 import csv
+import time
+
 import requests
 from datetime import datetime
 from typing import Dict
@@ -119,5 +121,7 @@ async def get_gradation_history(growth_type: str = Query("Volume", max_length=50
         """, token_data.get("user_id"), "volume" if growth_type == "Volume" else "price"
     )
 
-    return {"status": status.HTTP_200_OK, "data": data}
+    last_update = datetime.now()
+
+    return {"status": status.HTTP_200_OK, "data": data, "last_update": last_update}
 

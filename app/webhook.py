@@ -57,6 +57,9 @@ async def webhook(tg_request: Request):
     bot_return_text = i18n.get_string('bot.default_text', 'en')
     process_status = "success"
 
+    if not message.get("text"):
+        return {"Status": "ok"}
+
     if message.get("text").startswith("/start refId"):
 
         user_id = await database.fetchrow(
