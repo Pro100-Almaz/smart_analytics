@@ -1,4 +1,5 @@
 import os
+import multiprocessing
 from time import sleep
 
 import requests
@@ -93,6 +94,25 @@ def get_data():
     return result_list
 
 
+def process_record(record, push_new_value, current_time):
+    active_name = record.get('symbol')
+    last_value = float(record.get('lastPrice', {}))
+
+    try:
+        if push_new_value:
+            logger.info(f"Push stock data new minute value: {current_time}")
+            push_stock_data.delay(active_name, last_value)
+        else:
+            update_stock_data.delay(active_name, last_value)
+    except Exception as e:
+        logger.error(f"An error occurred while processing data: {e}")
+
+    try:
+        last_impulse_notification()
+    except Exception as e:
+        logger.error(f"Error while sending notification: {e}")
+
+
 def candlestick_receiver():
     phase_minute = None
     iteration_value = 1
@@ -104,26 +124,11 @@ def candlestick_receiver():
         push_new_value = True if current_time != phase_minute else False
         phase_minute = current_time
 
-        for record in data:
-            # unix_to_date(record.get('openTime'))
-            active_name = record.get('symbol')
-            last_value = float(record.get('lastPrice', {}))
-
-            try:
-                if push_new_value:
-                    logger.info(f"Push stock data new minute value: {current_time}")
-                    push_stock_data.delay(active_name, last_value)
-
-                else:
-                    update_stock_data.delay(active_name, last_value)
-            except Exception as e:
-                logger.error(f"An error occurred while processing data, at proxy {proxy}: {e}")
-                break
-
-            try:
-                last_impulse_notification()
-            except Exception as e:
-                logger.error("Error while sending notification: ", e)
+        try:
+            with multiprocessing.Pool(processes=8) as pool:
+                pool.starmap(process_record, [(record, push_new_value, current_time) for record in data])
+        except Exception as e:
+            logger.error(f"An error occurred during multiprocessing: {e}")
 
         logger.info(f"Ended {iteration_value} iteration!")
         iteration_value += 1
