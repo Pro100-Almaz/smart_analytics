@@ -94,23 +94,23 @@ def get_data():
     return result_list
 
 
-def process_record(record, push_new_value, current_time):
-    active_name = record.get('symbol')
-    last_value = float(record.get('lastPrice', {}))
-
-    try:
-        if push_new_value:
-            logger.info(f"Push stock data new minute value: {current_time}")
-            push_stock_data.delay(active_name, last_value)
-        else:
-            update_stock_data.delay(active_name, last_value)
-    except Exception as e:
-        logger.error(f"An error occurred while processing data: {e}")
-
-    try:
-        last_impulse_notification()
-    except Exception as e:
-        logger.error(f"Error while sending notification: {e}")
+# def process_record(record, push_new_value, current_time):
+#     active_name = record.get('symbol')
+#     last_value = float(record.get('lastPrice', {}))
+#
+#     try:
+#         if push_new_value:
+#             logger.info(f"Push stock data new minute value: {current_time}")
+#             push_stock_data.delay(active_name, last_value)
+#         else:
+#             update_stock_data.delay(active_name, last_value)
+#     except Exception as e:
+#         logger.error(f"An error occurred while processing data: {e}")
+#
+#     try:
+#         last_impulse_notification()
+#     except Exception as e:
+#         logger.error(f"Error while sending notification: {e}")
 
 
 def candlestick_receiver():
@@ -124,11 +124,28 @@ def candlestick_receiver():
         push_new_value = True if current_time != phase_minute else False
         phase_minute = current_time
 
+        # try:
+        #     with multiprocessing.Pool(processes=8) as pool:
+        #         pool.starmap(process_record, [(record, push_new_value, current_time) for record in data])
+        # except Exception as e:
+        #     logger.error(f"An error occurred during multiprocessing: {e}")
+        for record in data:
+            active_name = record.get('symbol')
+            last_value = float(record.get('lastPrice', {}))
+
+            try:
+                if push_new_value:
+                    logger.info(f"Push stock data new minute value: {current_time}")
+                    push_stock_data.delay(active_name, last_value)
+                else:
+                    update_stock_data.delay(active_name, last_value)
+            except Exception as e:
+                logger.error(f"An error occurred while processing data: {e}")
+
         try:
-            with multiprocessing.Pool(processes=8) as pool:
-                pool.starmap(process_record, [(record, push_new_value, current_time) for record in data])
+            last_impulse_notification()
         except Exception as e:
-            logger.error(f"An error occurred during multiprocessing: {e}")
+            logger.error(f"Error while sending notification: {e}")
 
         logger.info(f"Ended {iteration_value} iteration!")
         iteration_value += 1
