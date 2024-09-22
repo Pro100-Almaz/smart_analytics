@@ -95,12 +95,15 @@ def get_data():
 
 def candlestick_receiver():
     phase_minute = None
+    push_new_value = False
     iteration_value = 1
 
     while True:
         logger.info(f"Started {iteration_value} iteration!")
         data = get_data()
         current_time = datetime.now().minute
+        push_new_value = True if current_time != phase_minute else False
+        phase_minute = current_time
 
         for record in data:
             # unix_to_date(record.get('openTime'))
@@ -108,9 +111,8 @@ def candlestick_receiver():
             last_value = float(record.get('lastPrice', {}))
 
             try:
-                if phase_minute != current_time:
+                if push_new_value:
                     logger.info(f"Push stock data new minute value: {current_time}")
-                    phase_minute = current_time
                     push_stock_data.delay(active_name, last_value)
                     save_http_data(record)
 
