@@ -51,7 +51,6 @@ def unix_to_date(unix):
 
     adjusted_time = utc_time + timedelta(hours=5)
 
-    # Format the adjusted time
     date = adjusted_time.strftime('%M')
     return date
 
@@ -109,6 +108,7 @@ def candlestick_receiver():
 
             try:
                 if phase_minute != current_time:
+                    logger.info("Push stock data new minute value: ", current_time)
                     phase_minute = current_time
                     push_stock_data.delay(active_name, last_value)
                     save_http_data(record)
