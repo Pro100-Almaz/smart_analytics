@@ -44,8 +44,8 @@ async def webhook(tg_request: Request):
 
     telegram_id = message.get("from").get("id")
 
-    if telegram_id not in [1171545762, 972366203, 737271228, 588330621, 708964298]:
-        return {"Status": "ok"}
+    # if telegram_id not in [1171545762, 972366203, 737271228, 588330621, 708964298]:
+    #     return {"Status": "ok"}
 
     username = message.get("from").get("username", None)
     language_code = message.get("from").get("language_code", "en")
