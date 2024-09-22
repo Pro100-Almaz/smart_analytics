@@ -103,14 +103,12 @@ def candlestick_receiver():
 
         for record in data:
             current_time = unix_to_date(record.get('openTime'))
-            print(current_time)
-            logger.info("Push stock data new minute value: ", current_time)
             active_name = record.get('symbol')
             last_value = float(record.get('lastPrice', {}))
 
             try:
                 if phase_minute != current_time:
-                    logger.info("Push stock data new minute value: ", current_time)
+                    logger.info(f"Push stock data new minute value: {current_time}")
                     phase_minute = current_time
                     push_stock_data.delay(active_name, last_value)
                     save_http_data(record)
