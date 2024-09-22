@@ -44,15 +44,15 @@ proxies = {
 }
 
 
-def unix_to_date(unix):
-    timestamp_in_seconds = unix / 1000
-
-    utc_time = datetime.fromtimestamp(timestamp_in_seconds, tz=timezone.utc)
-
-    adjusted_time = utc_time + timedelta(hours=5)
-
-    date = adjusted_time.strftime('%M')
-    return date
+# def unix_to_date(unix):
+#     timestamp_in_seconds = unix / 1000
+#
+#     utc_time = datetime.fromtimestamp(timestamp_in_seconds, tz=timezone.utc)
+#
+#     adjusted_time = utc_time + timedelta(hours=5)
+#
+#     date = adjusted_time.strftime('%M')
+#     return date
 
 
 def get_data():
@@ -100,9 +100,10 @@ def candlestick_receiver():
     while True:
         logger.info(f"Started {iteration_value} iteration!")
         data = get_data()
+        current_time = datetime.now().minute
 
         for record in data:
-            current_time = unix_to_date(record.get('openTime'))
+            # unix_to_date(record.get('openTime'))
             active_name = record.get('symbol')
             last_value = float(record.get('lastPrice', {}))
 
