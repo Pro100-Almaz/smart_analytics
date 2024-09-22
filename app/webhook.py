@@ -158,7 +158,8 @@ async def webhook(tg_request: Request):
                     """, telegram_id, username, None, first_name, last_name, language_code, new_referral_link
                 )
 
-                user_id = int(result[0].get('user_id'))
+                user_id = int(result[0])
+                print(user_id)
 
                 await database.execute(
                     """
