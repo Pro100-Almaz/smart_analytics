@@ -125,7 +125,7 @@ def candlestick_receiver():
         phase_minute = current_time
 
         try:
-            with multiprocessing.Pool(processes=8) as pool:
+            with multiprocessing.Pool(processes=4) as pool:
                 pool.starmap(process_record, [(record, push_new_value, current_time) for record in data])
         except Exception as e:
             logger.error(f"An error occurred during multiprocessing: {e}")
