@@ -99,8 +99,10 @@ def candlestick_receiver():
 
     while True:
         logger.info(f"Started {iteration_value} iteration!")
-        data = get_data()
-        logger.info(f"{iteration_value} iteration data from request: ", data)
+        try:
+            data = get_data()
+        except Exception as e:
+            logger.error(f"{iteration_value} iteration data from request: ", e)
 
         for record in data:
             current_time = unix_to_date(record.get('openTime'))
