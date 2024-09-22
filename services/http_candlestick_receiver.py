@@ -114,7 +114,7 @@ def candlestick_receiver():
                 if push_new_value:
                     logger.info(f"Push stock data new minute value: {current_time}")
                     push_stock_data.delay(active_name, last_value)
-                    save_http_data(record)
+                    # save_http_data(record)
 
                 else:
                     update_stock_data.delay(active_name, last_value)
