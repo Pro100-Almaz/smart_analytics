@@ -52,7 +52,7 @@ def unix_to_date(unix):
     adjusted_time = utc_time + timedelta(hours=5)
 
     # Format the adjusted time
-    date = adjusted_time.strftime('%d-%m-%Y | %H:%M')
+    date = adjusted_time.strftime('%M')
     return date
 
 

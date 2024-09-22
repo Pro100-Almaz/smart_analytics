@@ -52,6 +52,24 @@ async def get_impulse_history(impulse_id: int = Query()):
     return {"status": status.HTTP_200_OK, "impulses_history": impulses_history}
 
 
+@router.patch("/update_impulse", tags=["notify"], dependencies=[Depends(JWTBearer())])
+async def get_impulse_history(impulse_params: Impulse, impulse_id: int = Query()):
+    condition = f"{impulse_params.interval}_min:{impulse_params.percentage}"
+
+    try:
+        await database.execute(
+            f"""
+                UPDATE users.user_notification
+                SET condition = $2
+                WHERE id = $1
+                """, impulse_id, condition
+        )
+    except Exception as e:
+        return {"status": status.HTTP_400_BAD_REQUEST, "message": "Error updating impulse!"}
+
+    return {"status": status.HTTP_200_OK}
+
+
 @router.delete("/delete_impulse", tags=["notify"])
 async def delete_impulse(impulse_id: int = Query(None), token_data: Dict = Depends(JWTBearer())):
     if impulse_id is None:

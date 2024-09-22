@@ -80,6 +80,24 @@ async def get_ticker_tracking_history(tt_id: int = Query(), token_data: Dict = D
     return {"status": status.HTTP_200_OK, "ticker_tracking_history": ticker_tracking_history}
 
 
+@router.patch("/update_ticker_tracking", tags=["notify"], dependencies=[Depends(JWTBearer())])
+async def get_impulse_history(tt_params: TickerTracking, tt_id: int = Query()):
+    condition = f"{tt_params.time_period}_min:{tt_params.ticker_name}"
+
+    try:
+        await database.execute(
+            f"""
+                UPDATE users.user_notification
+                SET condition = $2
+                WHERE id = $1
+                """, tt_id, condition
+        )
+    except Exception as e:
+        return {"status": status.HTTP_400_BAD_REQUEST, "message": "Error updating impulse!"}
+
+    return {"status": status.HTTP_200_OK}
+
+
 @router.delete("/delete_ticker_tracking", tags=["notify"])
 async def delete_ticker_tracking(tt_id: int = Query(None), token_data: Dict = Depends(JWTBearer())):
     if tt_id is None:
