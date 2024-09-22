@@ -99,13 +99,11 @@ def candlestick_receiver():
 
     while True:
         logger.info(f"Started {iteration_value} iteration!")
-        try:
-            data = get_data()
-        except Exception as e:
-            logger.error(f"{iteration_value} iteration data from request: ", e)
+        data = get_data()
 
         for record in data:
             current_time = unix_to_date(record.get('openTime'))
+            print(current_time)
             logger.info("Push stock data new minute value: ", current_time)
             active_name = record.get('symbol')
             last_value = float(record.get('lastPrice', {}))
