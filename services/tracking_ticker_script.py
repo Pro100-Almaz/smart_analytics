@@ -131,21 +131,11 @@ def main_runner():
                         WHERE type = %s
                         ORDER BY users.notification.date DESC
                         LIMIT 1
-                    )
-                    SELECT
-                        CASE
-                            WHEN EXISTS (SELECT 1 FROM un) THEN (
-                                SELECT telegram_id
-                                FROM un
-                                WHERE un.date <= NOW() - make_interval(mins := split_part(%s, '_', 1)::INTEGER)
-                            )
-                            ELSE (
-                                SELECT telegram_id
-                                FROM users."user"
-                                WHERE user_id = %s
-                            )
-                        END;
-                """, (tt_user[2], tt_user[1], tt_user[0])
+                    ) 
+                    SELECT telegram_id
+                    FROM un
+                    WHERE (un.date <= NOW() - make_interval(mins := split_part(%s, '_', 1)::INTEGER));
+                """, (tt_user[2], tt_user[1])
             )
 
             if check_last_notification:
