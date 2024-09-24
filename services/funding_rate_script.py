@@ -91,20 +91,20 @@ def get_volume_data():
 
                 stock_id = stock_id[0][0]
 
-                quote_volume_5m = database.execute_with_return(
+                quote_volume_60m = database.execute_with_return(
                     """
                     SELECT quote_volume
                     FROM data_history.volume_data
                     WHERE stock_id = %s
                     ORDER BY close_time DESC
-                    LIMIT 1 OFFSET 4;
+                    LIMIT 1 OFFSET 59;
                     """, (stock_id,)
                 )
 
-                if quote_volume_5m:
-                    record['5_min_value'] = format_number(round(float(quote_volume_5m[0][0]), 2))
+                if quote_volume_60m:
+                    record['60_min_value'] = format_number(round(float(quote_volume_60m[0][0]), 2))
 
-                record['quoteVolume'] = format_number(round(float(record['quoteVolume']), 2))
+                record['quoteVolumeFormatted'] = format_number(round(float(record['quoteVolume']), 2))
 
 
             redis_data = {
@@ -168,10 +168,10 @@ def get_volume_data():
                         weighted_avg_price, last_price, last_qty, open_price, high_price, volume, quote_volume, 
                         open_time, close_time, first_id, last_id, count)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (stock_id, Decimal(record["priceChange"]), Decimal(record["priceChangePercent"]),
-                          Decimal(record["weightedAvgPrice"]), Decimal(record["lastPrice"]), Decimal(record["lastQty"]),
-                          Decimal(record["openPrice"]), Decimal(record["highPrice"]), Decimal(record["volume"]),
-                          Decimal(record["quoteVolume"]), open_time, close_time, record["firstId"], record["lastId"],
+                    """, (stock_id, float(record["priceChange"]), float(record["priceChangePercent"]),
+                          float(record["weightedAvgPrice"]), float(record["lastPrice"]), float(record["lastQty"]),
+                          float(record["openPrice"]), float(record["highPrice"]), float(record["volume"]),
+                          float(record["quoteVolume"]), open_time, close_time, record["firstId"], record["lastId"],
                           record["count"])
                 )
             except Exception as e:
@@ -247,18 +247,18 @@ def get_funding_data():
 
                 stock_id = stock_id[0][0]
 
-                quote_volume_5m = database.execute_with_return(
+                quote_funding_60m = database.execute_with_return(
                     """
                     SELECT funding_rate
                     FROM data_history.funding_data
                     WHERE stock_id = %s
                     ORDER BY funding_time DESC
-                    LIMIT 1 OFFSET 4;
+                    LIMIT 1 OFFSET 59;
                     """, (stock_id,)
                 )
 
-                if quote_volume_5m:
-                    record['5_min_value'] = float(quote_volume_5m[0][0])
+                if quote_funding_60m:
+                    record['60_min_value'] = float(quote_funding_60m[0][0])
 
 
             for record in last_5:
@@ -275,7 +275,7 @@ def get_funding_data():
 
                 stock_id = stock_id[0][0]
 
-                quote_volume_5m = database.execute_with_return(
+                quote_funding_60m = database.execute_with_return(
                     """
                     SELECT funding_rate
                     FROM data_history.funding_data
@@ -285,8 +285,8 @@ def get_funding_data():
                     """, (stock_id,)
                 )
 
-                if quote_volume_5m:
-                    record['5_min_value'] = float(quote_volume_5m[0][0])
+                if quote_funding_60m:
+                    record['60_min_value'] = float(quote_funding_60m[0][0])
 
 
             redis_data = {

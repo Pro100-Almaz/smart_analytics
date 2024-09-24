@@ -1,4 +1,5 @@
 import os
+import multiprocessing
 from time import sleep
 
 import requests
@@ -44,16 +45,15 @@ proxies = {
 }
 
 
-def unix_to_date(unix):
-    timestamp_in_seconds = unix / 1000
-
-    utc_time = datetime.fromtimestamp(timestamp_in_seconds, tz=timezone.utc)
-
-    adjusted_time = utc_time + timedelta(hours=5)
-
-    # Format the adjusted time
-    date = adjusted_time.strftime('%d-%m-%Y | %H:%M')
-    return date
+# def unix_to_date(unix):
+#     timestamp_in_seconds = unix / 1000
+#
+#     utc_time = datetime.fromtimestamp(timestamp_in_seconds, tz=timezone.utc)
+#
+#     adjusted_time = utc_time + timedelta(hours=5)
+#
+#     date = adjusted_time.strftime('%M')
+#     return date
 
 
 def get_data():
@@ -94,6 +94,25 @@ def get_data():
     return result_list
 
 
+# def process_record(record, push_new_value, current_time):
+#     active_name = record.get('symbol')
+#     last_value = float(record.get('lastPrice', {}))
+#
+#     try:
+#         if push_new_value:
+#             logger.info(f"Push stock data new minute value: {current_time}")
+#             push_stock_data.delay(active_name, last_value)
+#         else:
+#             update_stock_data.delay(active_name, last_value)
+#     except Exception as e:
+#         logger.error(f"An error occurred while processing data: {e}")
+#
+#     try:
+#         last_impulse_notification()
+#     except Exception as e:
+#         logger.error(f"Error while sending notification: {e}")
+
+
 def candlestick_receiver():
     phase_minute = None
     iteration_value = 1
@@ -101,28 +120,32 @@ def candlestick_receiver():
     while True:
         logger.info(f"Started {iteration_value} iteration!")
         data = get_data()
+        current_time = datetime.now().minute
+        push_new_value = True if current_time != phase_minute else False
+        phase_minute = current_time
 
+        # try:
+        #     with multiprocessing.Pool(processes=8) as pool:
+        #         pool.starmap(process_record, [(record, push_new_value, current_time) for record in data])
+        # except Exception as e:
+        #     logger.error(f"An error occurred during multiprocessing: {e}")
         for record in data:
-            current_time = unix_to_date(record.get('openTime'))
             active_name = record.get('symbol')
             last_value = float(record.get('lastPrice', {}))
 
             try:
-                if phase_minute != current_time:
-                    phase_minute = current_time
+                if push_new_value:
+                    logger.info(f"Push stock data new minute value: {current_time}")
                     push_stock_data.delay(active_name, last_value)
-                    save_http_data(record)
-
                 else:
                     update_stock_data.delay(active_name, last_value)
             except Exception as e:
-                logger.error(f"An error occurred while processing data, at proxy {proxy}: {e}")
-                break
+                logger.error(f"An error occurred while processing data: {e}")
 
-            try:
-                last_impulse_notification()
-            except Exception as e:
-                logger.error("Error while sending notification: ", e)
+        try:
+            last_impulse_notification()
+        except Exception as e:
+            logger.error(f"Error while sending notification: {e}")
 
         logger.info(f"Ended {iteration_value} iteration!")
         iteration_value += 1

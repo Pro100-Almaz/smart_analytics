@@ -44,8 +44,8 @@ async def webhook(tg_request: Request):
 
     telegram_id = message.get("from").get("id")
 
-    if telegram_id not in [1171545762, 972366203, 737271228, 588330621, 708964298]:
-        return {"Status": "ok"}
+    # if telegram_id not in [1171545762, 972366203, 737271228, 588330621, 708964298]:
+    #     return {"Status": "ok"}
 
     username = message.get("from").get("username", None)
     language_code = message.get("from").get("language_code", "en")
@@ -56,6 +56,9 @@ async def webhook(tg_request: Request):
 
     bot_return_text = i18n.get_string('bot.default_text', 'en')
     process_status = "success"
+
+    if not message.get("text"):
+        return {"Status": "ok"}
 
     if message.get("text").startswith("/start refId"):
 
@@ -90,7 +93,8 @@ async def webhook(tg_request: Request):
                     """, telegram_id, username, None, first_name, last_name, language_code, new_referral_link
                 )
 
-                user_id = int(result[0].get('user_id'))
+                user_id = int(result[0])
+                print(user_id)
 
                 await database.execute(
                     """
@@ -155,7 +159,8 @@ async def webhook(tg_request: Request):
                     """, telegram_id, username, None, first_name, last_name, language_code, new_referral_link
                 )
 
-                user_id = int(result[0].get('user_id'))
+                user_id = int(result[0])
+                print(user_id)
 
 
                 await database.execute(

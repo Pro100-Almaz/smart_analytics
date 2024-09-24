@@ -80,6 +80,24 @@ async def get_ticker_tracking_history(tt_id: int = Query(), token_data: Dict = D
     return {"status": status.HTTP_200_OK, "ticker_tracking_history": ticker_tracking_history}
 
 
+@router.patch("/update_ticker_tracking", tags=["notify"], dependencies=[Depends(JWTBearer())])
+async def get_impulse_history(tt_params: TickerTracking, tt_id: int = Query()):
+    condition = f"{tt_params.time_period}_min:{tt_params.ticker_name}"
+
+    try:
+        await database.execute(
+            f"""
+                UPDATE users.user_notification
+                SET condition = $2
+                WHERE id = $1
+                """, tt_id, condition
+        )
+    except Exception as e:
+        return {"status": status.HTTP_400_BAD_REQUEST, "message": "Error updating impulse!"}
+
+    return {"status": status.HTTP_200_OK}
+
+
 @router.delete("/delete_ticker_tracking", tags=["notify"])
 async def delete_ticker_tracking(tt_id: int = Query(None), token_data: Dict = Depends(JWTBearer())):
     if tt_id is None:
@@ -101,6 +119,17 @@ async def delete_ticker_tracking(tt_id: int = Query(None), token_data: Dict = De
 
 @router.post("/set_ticker_tracking", tags=["notify"])
 async def set_ticker_tracking(tt_params: TickerTracking, token_data: Dict = Depends(JWTBearer())):
+    ticker_name = await database.fetchrow(
+        """
+        SELECT *
+        FROM data_history.funding
+        WHERE symbol = $1;
+        """, tt_params.ticker_name
+    )
+
+    if not ticker_name:
+        return {"status": status.HTTP_400_BAD_REQUEST, "message": "Ticker tracking not found!"}
+
     status_to_add = await database.fetch(
         """
             WITH notification_count AS (

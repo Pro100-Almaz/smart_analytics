@@ -68,6 +68,13 @@ async def get_funding_data(background_tasks: BackgroundTasks, interval: int = Qu
                 """, record["symbol"]
             )
 
+            if not stock_id:
+                return {"status": status.HTTP_200_OK,
+                        "positive_quantity": positive_funding_rate_quantity,
+                        "negative_quantity": negative_funding_rate_quantity,
+                        "neutral_quantity": neutral_funding_rate_quantity,
+                        }
+
             stock_id = stock_id.get("stock_id")
 
             stock_data = await database.fetch(
