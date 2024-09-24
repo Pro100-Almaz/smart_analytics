@@ -93,7 +93,7 @@ async def webhook(tg_request: Request):
                     """, telegram_id, username, None, first_name, last_name, language_code, new_referral_link
                 )
 
-                user_id = int(result[0])
+                user_id = int(result[0].get("user_id"))
                 print(user_id)
 
                 await database.execute(
@@ -150,7 +150,7 @@ async def webhook(tg_request: Request):
 
         if user_id is None:
             try:
-                result = await database.execute(
+                result = await database.fetch(
                     """
                     INSERT INTO users.user (telegram_id, username, profile_photo, first_name, last_name, 
                     language_code, referral_link)
@@ -159,9 +159,8 @@ async def webhook(tg_request: Request):
                     """, telegram_id, username, None, first_name, last_name, language_code, new_referral_link
                 )
 
-                user_id = int(result[0])
+                user_id = int(result[0].get("user_id"))
                 print(user_id)
-
 
                 await database.execute(
                     """
