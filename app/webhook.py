@@ -157,6 +157,7 @@ async def webhook(tg_request: Request):
 
                 user_id = int(result[0].get('user_id'))
 
+
                 await database.execute(
                     """
                     INSERT INTO users.premium (user_id, status, last_payment, discout) 
