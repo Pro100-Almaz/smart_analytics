@@ -136,6 +136,7 @@ def candlestick_receiver():
     while True:
         logger.info(f"Started {iteration_value} iteration!")
         data = run_with_timeout(get_data, 10, 6)
+        logger.info(f"Data from request: {data}")
 
         if not data:
             return "Error"
