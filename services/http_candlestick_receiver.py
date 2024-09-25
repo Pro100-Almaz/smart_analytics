@@ -135,11 +135,12 @@ def candlestick_receiver():
 
     while True:
         logger.info(f"Started {iteration_value} iteration!")
-        data = run_with_timeout(get_data, 10, 6)
-        logger.info(f"Data from request: {data}")
-
-        if not data:
-            return "Error"
+        try:
+            data = run_with_timeout(get_data, 10, 6)
+        except Exception as e:
+            logger.error(f"An error occurred while requesting data: {e}")
+            sleep(10)
+            continue
 
         current_time = datetime.now().minute
         push_new_value = True if current_time != phase_minute else False
