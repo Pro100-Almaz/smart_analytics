@@ -42,6 +42,7 @@ import datetime
 # app.control.purge()
 import redis
 import pickle
+import statistics
 
 REDIS_HOST = "localhost"
 REDIS_PORT = 12228
@@ -49,6 +50,43 @@ REDIS_DB = 0
 
 redis_database = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 
-shared_dict = pickle.loads(redis_database.get("binance:ticker:data:FIDAUSDT"))
+# main_data = requests.get('https://fapi.binance.com/fapi/v1/ticker/24hr')
+#
+# if main_data.status_code == 200:
+#     main_data = main_data.json()
+#     for ticker in main_data:
+#         if 'closeTime' in ticker and ticker['closeTime'] is not None:
+#             try:
+#                 ticker['openPositionDay'] = datetime.fromtimestamp(ticker['closeTime'] / 1000).strftime(
+#                     '%d-%m-%Y | %H')
+#             except (ValueError, TypeError) as e:
+#                 print(f"Error processing closeTime: {e}")
+#                 ticker['openPositionDay'] = None
+#         else:
+#             print("closeTime not found or invalid in ticker")
+#             ticker['openPositionDay'] = None
+#
+#     current_date = statistics.mode([ticker['openPositionDay'] for ticker in main_data])
+#     not_usdt_symbols = [ticker['symbol'] for ticker in main_data if 'USDT' not in ticker['symbol']]
+#     delete_symbols = [ticker['symbol'] for ticker in main_data if ticker['openPositionDay'] != current_date]
+#
+#     exchange_info_data = requests.get('https://fapi.binance.com/fapi/v1/exchangeInfo').json()['symbols']
+#     not_perpetual_symbols = [info['symbol'] for info in exchange_info_data if info['contractType'] != 'PERPETUAL']
+#     full_symbol_list_to_delete = set(not_usdt_symbols + delete_symbols + not_perpetual_symbols)
+#     volume_data = [ticker for ticker in main_data if ticker['symbol'] not in full_symbol_list_to_delete]
+#
+#     sorted_data_volume = sorted(volume_data, key=lambda x: float(x['quoteVolume']))
 
-print(shared_dict)
+
+
+shared_dict = pickle.loads(redis_database.get("binance:ticker:data:REEFUSDT"))
+
+
+for time_interval, data in shared_dict.items():
+    print("Time interval: ", time_interval)
+    if time_interval == '1_min':
+        print("Data from reddis db: ", data.get('value'))
+    else:
+        print("Data from reddis db: ", data.get('values'))
+
+

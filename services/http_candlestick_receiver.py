@@ -12,6 +12,7 @@ from logging.handlers import RotatingFileHandler
 from tasks import update_stock_data, push_stock_data
 from notification import last_impulse_notification
 from utils import save_http_data
+import concurrent.futures
 
 
 load_dotenv()
@@ -93,6 +94,21 @@ def get_data():
 
     return result_list
 
+def run_with_timeout(func, timeout, retries=3):
+    attempt = 0
+    while attempt < retries:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(func)
+            try:
+                result = future.result(timeout=timeout)
+                return result
+            except concurrent.futures.TimeoutError:
+                attempt += 1
+                logger.error(f"Attempt {attempt}: Function took longer than {timeout} seconds, restarting...")
+    else:
+        logger.error("Max retries reached. The function failed to complete within the time limit.")
+        return None
+
 
 # def process_record(record, push_new_value, current_time):
 #     active_name = record.get('symbol')
@@ -119,7 +135,11 @@ def candlestick_receiver():
 
     while True:
         logger.info(f"Started {iteration_value} iteration!")
-        data = get_data()
+        data = run_with_timeout(get_data, 10, 6)
+
+        if not data:
+            return "Error"
+
         current_time = datetime.now().minute
         push_new_value = True if current_time != phase_minute else False
         phase_minute = current_time
