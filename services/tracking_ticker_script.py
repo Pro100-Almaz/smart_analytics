@@ -123,20 +123,33 @@ def main_runner():
         to_notify_users = []
 
         for tt_user in tt_users:
-            check_last_notification = database.execute_with_return(
+            check_last_notification = None
+
+            notification_history = database.execute_with_return(
                 """
-                    WITH un AS (
-                        SELECT *
+                    SELECT date
+                    FROM users.notification
+                    WHERE type = %s
+                    ORDER BY users.notification.date DESC
+                    LIMIT 1;
+                """, (tt_user[2]),)
+            
+            if notification_history:
+                check_last_notification = database.execute_with_return(
+                    """
+                        SELECT telegram_id
                         FROM users.notification
-                        WHERE type = %s
-                        ORDER BY users.notification.date DESC
-                        LIMIT 1
-                    ) 
-                    SELECT telegram_id
-                    FROM un
-                    WHERE (un.date <= NOW() - make_interval(mins := split_part(%s, '_', 1)::INTEGER));
-                """, (tt_user[2], tt_user[1])
-            )
+                        WHERE (%s<= NOW() - make_interval(mins := split_part(%s, '_', 1)::INTEGER));
+                    """, (notification_history[0][0], tt_user[1]))
+            
+            else:
+                check_last_notification = database.execute_with_return(
+                    """
+                        SELECT telegram_id 
+                        FROM users.user
+                        WHERE user_id = %s;
+                    """, (tt_user[0],)
+                )
 
             if check_last_notification:
                 to_notify_users.append(check_last_notification[0]+tt_user)
