@@ -128,7 +128,6 @@ def main_runner():
         for tt_user in tt_users:
             check_last_notification = None
 
-
             notification_history = database.execute_with_return(
                 """
                     SELECT date
@@ -138,8 +137,9 @@ def main_runner():
                     LIMIT 1;
                 """, (tt_user[2],))
             
-
             if notification_history:
+                logger.info(f"Checking the user last notification! value: {notification_history}")
+
                 check_last_notification = database.execute_with_return(
                     """
                         SELECT telegram_id
@@ -148,6 +148,8 @@ def main_runner():
                     """, (notification_history, tt_user[1]))
             
             else:
+                logger.info(f"User did not get any notification! value: {notification_history}")
+
                 check_last_notification = database.execute_with_return(
                     """
                         SELECT telegram_id 
