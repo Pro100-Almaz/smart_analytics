@@ -145,7 +145,7 @@ def main_runner():
                         SELECT telegram_id
                         FROM users.notification
                         WHERE (%s <= NOW() - make_interval(mins := split_part(%s, '_', 1)::INTEGER));
-                    """, (notification_history, tt_user[1]))
+                    """, (notification_history[0], tt_user[1]))
             
             else:
                 logger.info(f"User did not get any notification! value: {notification_history}")
