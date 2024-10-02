@@ -128,6 +128,9 @@ def main_runner():
         for tt_user in tt_users:
             check_last_notification = None
 
+            logger.info(f"{tt_user}")
+
+
             notification_history = database.execute_with_return(
                 """
                     SELECT date
