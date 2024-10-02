@@ -138,7 +138,7 @@ def main_runner():
                     WHERE type = %s
                     ORDER BY users.notification.date DESC
                     LIMIT 1;
-                """, (tt_user[2]),)
+                """, (tt_user[2],))
             
             logger.info(f"{notification_history}")
             
