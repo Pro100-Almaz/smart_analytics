@@ -203,7 +203,7 @@ def main_runner():
             else:
                 notify_list[ticker_name]['telegram_id'].append(user_telegram_id)
 
-        logger.info("Collected telegram id of users: ", notify_list)
+        logger.info("Collected telegram id of users")
 
 
         for index, record in enumerate(volume_data):
