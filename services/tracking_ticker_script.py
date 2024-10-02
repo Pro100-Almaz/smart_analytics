@@ -120,7 +120,7 @@ def main_runner():
             """
         )
 
-        logger.info("First step, collecting all users ticker tracking", tt_users)
+        logger.info(f"First step, collecting all users ticker tracking {tt_users}")
 
 
         to_notify_users = []
