@@ -154,6 +154,8 @@ def main_runner():
             if check_last_notification:
                 to_notify_users.append(check_last_notification[0]+tt_user)
 
+        logger.info("Step after soring user by notification: ", to_notify_users)
+
         if not to_notify_users:
             database.disconnect()
             return
@@ -168,6 +170,8 @@ def main_runner():
             return
 
         notify_list = {}
+
+        logger.info("Collected data from volume and funding data.")
 
         for tt_user in tt_users:
             time_interval, ticker_name = tt_user[2].split(":")
@@ -191,6 +195,9 @@ def main_runner():
                 }
             else:
                 notify_list[ticker_name]['telegram_id'].append(user_telegram_id)
+
+        logger.info("Collected telegram id of users: ", notify_list)
+
 
         for index, record in enumerate(volume_data):
             if record.get('symbol', None) in notify_list.keys():
