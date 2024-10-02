@@ -140,13 +140,15 @@ def main_runner():
                     LIMIT 1;
                 """, (tt_user[2]),)
             
+            logger.info(f"{notification_history}")
+            
             if notification_history:
                 check_last_notification = database.execute_with_return(
                     """
                         SELECT telegram_id
                         FROM users.notification
                         WHERE (%s<= NOW() - make_interval(mins := split_part(%s, '_', 1)::INTEGER));
-                    """, (notification_history[0], tt_user[1]))
+                    """, (notification_history, tt_user[1]))
             
             else:
                 check_last_notification = database.execute_with_return(
