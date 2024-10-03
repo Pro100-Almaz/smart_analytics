@@ -196,8 +196,8 @@ async def webhook(tg_request: Request):
         reply_markup = {
             "inline_keyboard": [[{
                 "text": "Lets trade!",
-                # "web_app": {"url": "https://dsde1736.fornex.org/"}
-                "web_app": {"url": "https://smart-trade-kappa.vercel.app/"}
+                "web_app": {"url": "https://dsde1736.fornex.org/"}
+                # "web_app": {"url": "https://smart-trade-kappa.vercel.app/"}
             }]]
         }
 
