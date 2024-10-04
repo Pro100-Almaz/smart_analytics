@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, status, Depends, Query
 
 from app.database import database
 from app.auth_bearer import JWTBearer
+from schemas import VolumeData
 
 
 load_dotenv()
@@ -25,7 +26,7 @@ def format_number(number):
 
 
 @router.get("/ticker_information", dependencies=[Depends(JWTBearer())])
-async def get_funding_history(ticker: str = Query(max_length=50)):
+async def ticker_information(ticker: str = Query(max_length=50)):
     if not ticker:
         return {"status": "fail", "message": "No ticker provided"}
 
@@ -131,3 +132,9 @@ async def get_funding_history(ticker: str = Query(max_length=50)):
         "median_daily_volume": median_daily_volume,
         "ticker_data": ticker_data
     }
+
+
+@router.get("/volume_24hr", dependencies=[Depends(JWTBearer())])
+async def volume_24hr(params: VolumeData):
+
+    return True
