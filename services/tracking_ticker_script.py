@@ -161,7 +161,7 @@ def main_runner():
             if check_last_notification:
                 to_notify_users.append(check_last_notification[0]+tt_user)
 
-        logger.info(f"Step after soring user by notification: {to_notify_users}", )
+        logger.info(f"Step after soring user by notification: {to_notify_users}")
 
         if not to_notify_users:
             database.disconnect()
