@@ -153,7 +153,7 @@ def main_runner():
                 check_last_notification = database.execute_with_return(
                     """
                         SELECT telegram_id 
-                        FROM users.user
+                        FROM users."user"
                         WHERE user_id = %s;
                     """, (tt_user[0],)
                 )
