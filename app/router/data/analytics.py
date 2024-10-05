@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, status, Depends, Query
 from app.database import database
 from app.auth_bearer import JWTBearer
 from .schemas import VolumeData
-from webhook import bot
+from app.webhook import bot
 
 
 load_dotenv()
