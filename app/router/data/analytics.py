@@ -29,54 +29,6 @@ def format_number(number):
     return f"{formatted_integer}.{fractional_part}$"
 
 
-async def file_generation(volume_data, interval, growth_type, csv_file_path):
-    for record in volume_data:
-        stock_id = await database.fetchrow(
-            """
-            SELECT stock_id
-            FROM data_history.funding
-            WHERE symbol = $1;
-            """, record["symbol"]
-        )
-
-        stock_id = stock_id.get("stock_id")
-
-        stock_data = await database.fetch(
-            """
-            WITH FilteredData AS (
-                SELECT
-                    *,
-                    ROW_NUMBER() OVER (ORDER BY open_time) AS rn
-                FROM
-                    data_history.volume_data
-                WHERE
-                    stock_id = $1
-            )
-            SELECT
-                *
-            FROM
-                FilteredData
-            WHERE
-                rn % $2 = 0  
-            ORDER BY
-                open_time
-            LIMIT 1;
-            """, stock_id, interval
-        )
-
-        stock_data = stock_data[0]
-
-        if growth_type == "Volume":
-            local_percent = calculate_percentage_change(float(record["quoteVolume"]), float(stock_data["quote_volume"]))
-        else:
-            local_percent = calculate_percentage_change(float(record["lastPrice"]), float(stock_data["last_price"]))
-
-        with open(csv_file_path, mode='a', newline='') as file:
-            writer = csv.writer(file)
-
-            writer.writerow([record["symbol"], local_percent])
-
-
 @router.get("/ticker_information", dependencies=[Depends(JWTBearer())])
 async def ticker_information(ticker: str = Query(max_length=50)):
     if not ticker:
@@ -186,7 +138,7 @@ async def ticker_information(ticker: str = Query(max_length=50)):
     }
 
 
-@router.get("/volume_24hr", tags=["analytics"])
+@router.get("/volume_24hr")
 async def volume_24hr(params: VolumeData, action: str = Query(max_length=20, default="generate"), token_data: Dict = Depends(JWTBearer())):
     ticker = await database.fetchrow(
         """
