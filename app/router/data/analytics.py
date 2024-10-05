@@ -1,3 +1,6 @@
+import csv
+import os
+from datetime import datetime
 from typing import Dict
 
 from dotenv import load_dotenv
@@ -7,6 +10,7 @@ from fastapi import APIRouter, HTTPException, status, Depends, Query
 from app.database import database
 from app.auth_bearer import JWTBearer
 from schemas import VolumeData
+from webhook import bot
 
 
 load_dotenv()
@@ -23,6 +27,54 @@ def format_number(number):
     integer_part, fractional_part = f"{number:.2f}".split('.')
     formatted_integer = f'{int(integer_part):,}'
     return f"{formatted_integer}.{fractional_part}$"
+
+
+async def file_generation(volume_data, interval, growth_type, csv_file_path):
+    for record in volume_data:
+        stock_id = await database.fetchrow(
+            """
+            SELECT stock_id
+            FROM data_history.funding
+            WHERE symbol = $1;
+            """, record["symbol"]
+        )
+
+        stock_id = stock_id.get("stock_id")
+
+        stock_data = await database.fetch(
+            """
+            WITH FilteredData AS (
+                SELECT
+                    *,
+                    ROW_NUMBER() OVER (ORDER BY open_time) AS rn
+                FROM
+                    data_history.volume_data
+                WHERE
+                    stock_id = $1
+            )
+            SELECT
+                *
+            FROM
+                FilteredData
+            WHERE
+                rn % $2 = 0  
+            ORDER BY
+                open_time
+            LIMIT 1;
+            """, stock_id, interval
+        )
+
+        stock_data = stock_data[0]
+
+        if growth_type == "Volume":
+            local_percent = calculate_percentage_change(float(record["quoteVolume"]), float(stock_data["quote_volume"]))
+        else:
+            local_percent = calculate_percentage_change(float(record["lastPrice"]), float(stock_data["last_price"]))
+
+        with open(csv_file_path, mode='a', newline='') as file:
+            writer = csv.writer(file)
+
+            writer.writerow([record["symbol"], local_percent])
 
 
 @router.get("/ticker_information", dependencies=[Depends(JWTBearer())])
@@ -134,7 +186,95 @@ async def ticker_information(ticker: str = Query(max_length=50)):
     }
 
 
-@router.get("/volume_24hr", dependencies=[Depends(JWTBearer())])
-async def volume_24hr(params: VolumeData):
+@router.get("/volume_24hr", tags=["analytics"])
+async def volume_24hr(params: VolumeData, action: str = Query(max_length=20, default="generate"), token_data: Dict = Depends(JWTBearer())):
+    ticker = await database.fetchrow(
+        """
+        SELECT *
+        FROM data_history.funding
+        WHERE symbol = $1;
+        """, params.active_name
+    )
 
-    return True
+    if not ticker:
+        return {"status": status.HTTP_404_NOT_FOUND, "message": "No such ticker!"}
+
+    time_gap = 60 if params.time_value <= 3 else 1440
+    limit_number = 24 * params.time_value if params.time_value <= 3 else params.time_value
+
+    try:
+        stock_data = await database.fetch(
+            """
+            WITH FilteredData AS (
+                SELECT
+                    *,
+                    ROW_NUMBER() OVER (ORDER BY funding_time) AS rn
+                FROM
+                    data_history.funding_data
+                WHERE
+                    stock_id = $1
+            )
+            SELECT
+                *
+            FROM
+                FilteredData
+            WHERE
+                rn % $2 = 0  
+            ORDER BY
+                funding_time
+            LIMIT
+                $3;
+            """, ticker.get('stock_id'), time_gap, limit_number
+        )
+    except Exception as e:
+        return {"status": status.HTTP_409_CONFLICT, "message": "Error occurred while processing the data from database!"}
+
+    if action == "generate":
+        return_value = {
+            'time_interval': [],
+            'volume_data': []
+        }
+
+        for data in stock_data:
+            return_value['time_interval'].append(data['close_time'])
+            return_value['volume_data'].append(data['volume'])
+
+        difference_percent = (stock_data[-1]['volume'] - stock_data[0]['volume']) / stock_data[0]['volume'] * 100
+
+        return {"status": status.HTTP_200_OK, "data": return_value,
+                "last_update": datetime.now().date(), "difference_percent":difference_percent}
+
+    if action == "sent":
+        user_id = token_data.get("user_id")
+        current_date = datetime.now().date()
+        current_time = datetime.now().time().replace(microsecond=0)
+
+        directory_path = f"dataframes/{user_id}/{current_date}/{current_time}"
+        os.makedirs(directory_path, exist_ok=True)
+        csv_file_path = directory_path + f"/{params.time_value}d_volume.csv"
+
+        last_value = None
+        row_index = 0
+
+        with open(csv_file_path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["index", "date", "daily_volume", "volume_change_percent"])
+
+            for data in stock_data[-1:0:-1]:
+                date = data['close_time'].strftime("%d-%m-%Y | %H:%M")
+                change_percent = None
+
+                if last_value:
+                    change_percent = (last_value - data['volume']) / data['volume'] * 100
+                    last_value = data['volume']
+
+                writer.writerow([row_index, date, data['daily_volume'], change_percent])
+
+        telegram_id = token_data["telegram_id"]
+
+        with open(csv_file_path, 'rb') as file:
+            await bot.send_document(chat_id=telegram_id, document=file, filename="funding_data.csv")
+
+        return {"Status": "ok"}
+
+    return {}
