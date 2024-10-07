@@ -20,22 +20,6 @@ load_dotenv()
 router = APIRouter()
 
 
-class MyHTMLParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.decoded_text = ""
-
-    def handle_data(self, data):
-        self.decoded_text += data
-
-
-def decode_text(encoded_text):
-    decoded_json = json.loads(encoded_text)
-    parser = MyHTMLParser()
-    parser.feed(decoded_json["text"])
-    return parser.decoded_text
-
-
 def get_symbols():
     main_data = requests.get('https://fapi.binance.com/fapi/v1/ticker/24hr').json()
 
@@ -96,8 +80,12 @@ async def get_ticker_tracking_history(tt_id: int = Query(), token_data: Dict = D
         """, tt_id
     )
 
+    result_texts = []
     for item in ticker_tracking_history:
-        item["text"] = decode_text(item["text"])
+        text_data = json.loads(item["text"])
+        result_text = text_data["result"]["text"]
+        result_texts.append(result_text)
+    return result_texts      
 
     return {"status": status.HTTP_200_OK, "ticker_tracking_history": ticker_tracking_history}
 
