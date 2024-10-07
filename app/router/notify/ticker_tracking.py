@@ -12,9 +12,28 @@ from app.database import database
 from app.auth_bearer import JWTBearer
 from .schemas import TickerTracking
 
+import json
+from html.parser import HTMLParser
+
 
 load_dotenv()
 router = APIRouter()
+
+
+class MyHTMLParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.decoded_text = ""
+
+    def handle_data(self, data):
+        self.decoded_text += data
+
+
+def decode_text(encoded_text):
+    decoded_json = json.loads(encoded_text)
+    parser = MyHTMLParser()
+    parser.feed(decoded_json["text"])
+    return parser.decoded_text
 
 
 def get_symbols():
@@ -76,6 +95,9 @@ async def get_ticker_tracking_history(tt_id: int = Query(), token_data: Dict = D
         LIMIT 10;
         """, tt_id
     )
+
+    for item in ticker_tracking_history:
+        item["text"] = decode_text(item["text"])
 
     return {"status": status.HTTP_200_OK, "ticker_tracking_history": ticker_tracking_history}
 
