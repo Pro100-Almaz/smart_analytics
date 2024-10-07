@@ -69,7 +69,7 @@ async def get_ticker_tracking(token_data: Dict = Depends(JWTBearer())):
 
 
 @router.get("/get_ticker_tracking_history", tags=["notify"])
-async def get_ticker_tracking_history(tt_id: int = Query(), token_data: Dict = Depends(JWTBearer())):
+async def get_ticker_tracking_history(tt_id: int = Query()):
     ticker_tracking_history = await database.fetch(
         f"""
         SELECT *
@@ -80,14 +80,22 @@ async def get_ticker_tracking_history(tt_id: int = Query(), token_data: Dict = D
         """, tt_id
     )
 
-    result_texts = []
+    return_data = []
+
     for item in ticker_tracking_history:
+        temp_value = {}
         text_data = json.loads(item["text"])
         result_text = text_data["result"]["text"]
-        result_texts.append(result_text)
-    return result_texts      
 
-    return {"status": status.HTTP_200_OK, "ticker_tracking_history": ticker_tracking_history}
+        temp_value["text"] = result_text
+        temp_value["type"] = item["type"]
+        temp_value["date"] = item["date"]
+        temp_value["active_name"] = item["active_name"]
+        temp_value["status"] = item["status"]
+
+        return_data.append(temp_value)
+
+    return {"status": status.HTTP_200_OK, "ticker_tracking_history": return_data}
 
 
 @router.patch("/update_ticker_tracking", tags=["notify"], dependencies=[Depends(JWTBearer())])
