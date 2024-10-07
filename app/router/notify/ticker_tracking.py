@@ -68,7 +68,7 @@ async def get_ticker_tracking(token_data: Dict = Depends(JWTBearer())):
     return {"status": status.HTTP_200_OK, "records": records, "conditions": conditions}
 
 
-@router.get("/get_ticker_tracking_history", tags=["notify"])
+@router.get("/get_ticker_tracking_history", tags=["notify"], dependencies=[Depends(JWTBearer())])
 async def get_ticker_tracking_history(tt_id: int = Query()):
     ticker_tracking_history = await database.fetch(
         f"""
