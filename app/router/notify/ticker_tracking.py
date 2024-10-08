@@ -68,7 +68,11 @@ async def get_ticker_tracking(token_data: Dict = Depends(JWTBearer())):
     return {"status": status.HTTP_200_OK, "records": records, "conditions": conditions}
 
 
+<<<<<<< HEAD
+@router.get("/get_ticker_tracking_history", tags=["notify"])
+=======
 @router.get("/get_ticker_tracking_history", tags=["notify"], dependencies=[Depends(JWTBearer())])
+>>>>>>> main
 async def get_ticker_tracking_history(tt_id: int = Query()):
     ticker_tracking_history = await database.fetch(
         f"""
@@ -84,14 +88,15 @@ async def get_ticker_tracking_history(tt_id: int = Query()):
 
     for item in ticker_tracking_history:
         temp_value = {}
-        text_data = json.loads(item["text"])
-        result_text = text_data["result"]["text"]
+        params_data = json.loads(item["params"])
+        params_data.pop("type")
+        params_data.pop("telegram_id")
 
-        temp_value["text"] = result_text
         temp_value["type"] = item["type"]
         temp_value["date"] = item["date"]
-        temp_value["active_name"] = item["active_name"]
         temp_value["status"] = item["status"]
+        temp_value["active_name"] = item["active_name"]
+        temp_value["params"] = params_data
 
         return_data.append(temp_value)
 
