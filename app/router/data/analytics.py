@@ -138,7 +138,7 @@ async def ticker_information(ticker: str = Query(max_length=50)):
     }
 
 
-@router.get("/volume_24hr")
+@router.post("/volume_24hr")
 async def volume_24hr(params: VolumeData, action: str = Query(max_length=20, default="generate"), token_data: Dict = Depends(JWTBearer())):
     ticker = await database.fetchrow(
         """
@@ -160,9 +160,9 @@ async def volume_24hr(params: VolumeData, action: str = Query(max_length=20, def
             WITH FilteredData AS (
                 SELECT
                     *,
-                    ROW_NUMBER() OVER (ORDER BY funding_time) AS rn
+                    ROW_NUMBER() OVER (ORDER BY close_time) AS rn
                 FROM
-                    data_history.funding_data
+                    data_history.volume_data
                 WHERE
                     stock_id = $1
             )
@@ -173,7 +173,7 @@ async def volume_24hr(params: VolumeData, action: str = Query(max_length=20, def
             WHERE
                 rn % $2 = 0  
             ORDER BY
-                funding_time
+                close_time
             LIMIT
                 $3;
             """, ticker.get('stock_id'), time_gap, limit_number
@@ -196,7 +196,7 @@ async def volume_24hr(params: VolumeData, action: str = Query(max_length=20, def
         return {"status": status.HTTP_200_OK, "data": return_value,
                 "last_update": datetime.now().date(), "difference_percent":difference_percent}
 
-    if action == "sent":
+    if action == "send":
         user_id = token_data.get("user_id")
         current_date = datetime.now().date()
         current_time = datetime.now().time().replace(microsecond=0)
@@ -220,12 +220,12 @@ async def volume_24hr(params: VolumeData, action: str = Query(max_length=20, def
                     change_percent = (last_value - data['volume']) / data['volume'] * 100
                     last_value = data['volume']
 
-                writer.writerow([row_index, date, data['daily_volume'], change_percent])
+                writer.writerow([row_index, date, data['quote_volume'], change_percent])
 
         telegram_id = token_data["telegram_id"]
 
         with open(csv_file_path, 'rb') as file:
-            await bot.send_document(chat_id=telegram_id, document=file, filename="funding_data.csv")
+            await bot.send_document(chat_id=telegram_id, document=file, filename="24hr_data.csv")
 
         return {"Status": "ok"}
 
