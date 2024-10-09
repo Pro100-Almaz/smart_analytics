@@ -221,7 +221,7 @@ async def get_funding_data_file(token_data: Dict = Depends(JWTBearer())):
 
 
 @router.get("/send_volume_24hr", tags=["telegram_bot"])
-async def get_24hr_volume(file_id: str = Query(), token_data: Dict = Depends(JWTBearer())):
+async def get_24hr_volume(file_id: int = Query(), token_data: Dict = Depends(JWTBearer())):
     telegram_id = token_data["telegram_id"]
 
     file_path = await database.fetchrow(
