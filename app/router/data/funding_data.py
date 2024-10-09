@@ -16,10 +16,10 @@ router = APIRouter()
 
 
 @router.get("/funding_data", tags=["data"])
-async def get_funding_data(background_tasks: BackgroundTasks, interval: int = Query(7), token_data: Dict = Depends(JWTBearer())):
+async def get_funding_data(background_tasks: BackgroundTasks, interval: int = Query(7)):
     funding_response = requests.get("https://fapi.binance.com/fapi/v1/premiumIndex")
     if funding_response.status_code == 200:
-        user_id = token_data.get("user_id")
+        user_id = 1 # token_data.get("user_id")
         csv_file_path = f"dataframes/funding_data_{user_id}.csv"
 
         with open(csv_file_path, mode='w', newline='') as file:
