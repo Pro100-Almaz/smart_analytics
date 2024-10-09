@@ -222,7 +222,7 @@ async def volume_24hr(params: VolumeData, action: str = Query(max_length=20, def
 
                 writer.writerow([row_index, date, data['quote_volume'], change_percent])
 
-        file_id = database.fetch(
+        file_id = await database.fetch(
             """
             INSERT INTO data_history.volume_data_history (user_id, date, type, directory)
             VALUES ($1, $2, $3, $4)
