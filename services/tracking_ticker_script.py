@@ -122,7 +122,6 @@ def main_runner():
 
         logger.info(f"First step, collecting all users ticker tracking {tt_users}")
 
-
         to_notify_users = []
 
         for tt_user in tt_users:
@@ -130,10 +129,10 @@ def main_runner():
 
             notification_history = database.execute_with_return(
                 """
-                    SELECT date
+                    SELECT date, telegram_id
                     FROM users.notification
                     WHERE type = %s
-                    ORDER BY users.notification.date DESC
+                    ORDER BY date DESC
                     LIMIT 1;
                 """, (tt_user[2],))
             

@@ -222,11 +222,14 @@ async def volume_24hr(params: VolumeData, action: str = Query(max_length=20, def
 
                 writer.writerow([row_index, date, data['quote_volume'], change_percent])
 
-        telegram_id = token_data["telegram_id"]
+        file_id = database.fetch(
+            """
+            INSERT INTO data_history.volume_data_history (user_id, date, type, directory)
+            VALUES ($1, $2, $3, $4)
+            RETURNING file_id;
+            """, user_id, current_date, "24hr_volume", csv_file_path
+        )
 
-        with open(csv_file_path, 'rb') as file:
-            await bot.send_document(chat_id=telegram_id, document=file, filename="24hr_data.csv")
-
-        return {"Status": "ok"}
+        return {"Status": "ok", "file_id": file_id}
 
     return {}

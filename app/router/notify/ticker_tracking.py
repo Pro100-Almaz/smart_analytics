@@ -173,17 +173,17 @@ async def set_ticker_tracking(tt_params: TickerTracking, token_data: Dict = Depe
         return {"status": status.HTTP_403_FORBIDDEN, "message": "Ticker tracking not allowed!"}
 
     try:
-        await database.execute(
+        tt_id = await database.fetch(
             """
             INSERT INTO users.user_notification (user_id, notification_type, notify_time, condition, created) 
             VALUES ($1, 'ticker_tracking', NULL, $2, $3)
+            RETURNING id
             """, token_data.get("user_id"), condition, datetime.now()
         )
     except Exception as e:
-        print(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Error arose while adding new notification. Condition 1"
         )
 
-    return {"Success": status.HTTP_200_OK}
+    return {"Success": status.HTTP_200_OK, "tt_id": tt_id[0].get("id")}

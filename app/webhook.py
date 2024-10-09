@@ -220,6 +220,26 @@ async def get_funding_data_file(token_data: Dict = Depends(JWTBearer())):
     return {"Status": "ok"}
 
 
+@router.get("/send_24hr_volume", tags=["telegram_bot"])
+async def get_24hr_volume(file_id: str = Query(), token_data: Dict = Depends(JWTBearer())):
+    telegram_id = token_data["telegram_id"]
+
+    file_path = await database.fetchrow(
+        """
+        SELECT *
+        FROM data_history.volume_data_history
+        WHERE file_id = $1 
+        """, file_id
+    )
+
+    csv_file_path = file_path.get("directory")
+    file_name = csv_file_path.split("/")[-1]
+    with open(csv_file_path, 'rb') as file:
+        await bot.send_document(chat_id=telegram_id, document=file, filename=file_name)
+
+    return {"Status": "ok"}
+
+
 @router.get("/send_growth_data", tags=["telegram_bot"])
 async def download_growth(file_id: int = Query(), token_data: Dict = Depends(JWTBearer())):
     if not file_id:
